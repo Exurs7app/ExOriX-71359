@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>ExOriX — Power Up Your Crypto Journey</title>
 <meta name="description" content="Track your crypto balance, wallets and top coins like BTC and ETH in a sleek mobile dashboard." />
 <meta name="theme-color" content="#071332" />
@@ -59,6 +59,7 @@
   html[dir="rtl"] body { font-family: "Tahoma", "Arial", "Inter", sans-serif; }
   html[dir="rtl"] .set-chevron { transform: scaleX(-1); }
   html[dir="rtl"] .eye-btn { right: auto; left: 6px; }
+  html[dir="rtl"] .input-icon { right: auto; left: 6px; }
   html[dir="rtl"] .input-wrap input { padding-right: 16px; padding-left: 48px; }
   html[dir="rtl"] .m-input-wrap input { padding-right: 16px; padding-left: 48px; }
 
@@ -232,6 +233,15 @@
   }
   .eye-btn svg { width: 18px; height: 18px; }
 
+  /* Decorative trailing icon inside inputs (e.g. invite-code pencil) */
+  .input-icon {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--wallet-dim); pointer-events: none;
+  }
+  .input-icon svg { width: 18px; height: 18px; }
+
   /* Password strength meter */
   .strength { margin-top: 8px; display: none; }
   .strength.show { display: block; }
@@ -271,6 +281,12 @@
   }
   .social-btn:hover { background: rgba(255,255,255,0.1); filter: none; }
   .social-btn svg { width: 18px; height: 18px; }
+  /* Email/password is the only visible auth method for now. Keep the
+     unused social markup inert without affecting either form's behavior. */
+  #page-login .divider,
+  #page-login .social-row,
+  #page-signup .divider,
+  #page-signup .social-row { display: none !important; }
 
   /* Form alert */
   .form-alert {
@@ -420,7 +436,32 @@
   @media (prefers-reduced-motion: reduce) {
     .greeting-avatar-icon, .greeting-avatar-icon .crypto-frame, .greeting-avatar-icon .crypto-coin, .greeting-avatar-icon .crypto-coin-inner, .greeting-avatar-icon .crypto-bar, .greeting-avatar-icon .crypto-mark, .greeting-avatar-icon .crypto-trend, .greeting-avatar-icon .crypto-arrow, .greeting-avatar-icon .crypto-spark, .greeting-avatar-icon .time-sun, .greeting-avatar-icon .time-rays, .greeting-avatar-icon .time-candle, .greeting-avatar-icon .time-moon, .greeting-avatar-icon .time-stars, .greeting-avatar-icon .time-orbit, .greeting-avatar-icon .time-lock, .greeting-avatar-icon .time-signal, .greeting-avatar::after { animation: none; }
   }
-  .greeting .hello { font-size: 13px; color: var(--wallet-muted); }
+  /* Greeting text stays locked next to the avatar: it keeps the page
+     direction for alignment, isolates its English text so it always reads
+     left-to-right, and reserves a fixed line box so nothing shifts. */
+  .greeting .left > div { display: flex; flex-direction: column; align-items: stretch; flex: 1 1 auto; width: 0; }
+  .greeting .hello {
+    font-size: 13px;
+    color: var(--wallet-muted);
+    display: block;
+    max-width: 100%;
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: isolate;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 18px;
+    min-height: 18px;
+  }
+  html[dir="rtl"] .greeting .hello { text-align: right; }
+  .greeting .left > div > h1 {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: start;
+  }
   .greeting h1 { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 22px; font-weight: 600; line-height: 1.25; }
   .icon-btn {
     position: relative; width: 40px; height: 40px; border-radius: 50%;
@@ -1899,7 +1940,9 @@
     color: #063526; background: linear-gradient(135deg, #d9f7ed, #bfeee0); border: 1px solid rgba(74,222,158,.8);
     box-shadow: 0 9px 22px rgba(41,184,139,.18); direction: rtl;
   }
-  .w-deposit-success[hidden] { display: none; }
+  /* Keep the credited-deposit status available to wallet logic, but never render its card. */
+  .w-deposit-success { display: none !important; }
+  #wd-memo-wrap { display: none !important; }
   .w-deposit-success-icon {
     width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
     color: #fff; background: #14b981; font-size: 21px; font-weight: 800;
@@ -2178,6 +2221,175 @@
   #wd-history-modal .w-history-record-value small.done { color: var(--wallet-up); }
   #wd-history-modal .w-history-record-value small.pending { color: var(--wallet-btc); }
   #wd-history-modal .w-history-record-value small.failed { color: var(--wallet-down); }
+
+  /* ===== Withdrawal history — professional ledger redesign ===== */
+  #wd-history-modal .w-history-panel {
+    margin-top: 4px; padding: 0; border-radius: 0;
+    background: transparent; border: none; box-shadow: none;
+  }
+  #wd-history-modal .w-history-list { margin-top: 0; gap: 0; }
+  #wd-history-modal .w-history-record {
+    position: relative; gap: 13px; padding: 15px 4px;
+    border-radius: 0; background: transparent; border: none;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+    transition: background .18s ease, padding .18s ease;
+  }
+  #wd-history-modal .w-history-record:first-child { padding-top: 6px; }
+  #wd-history-modal .w-history-record:last-child { border-bottom: none; }
+  #wd-history-modal .w-history-record:hover {
+    transform: none; background: rgba(255,255,255,.035);
+    border-color: rgba(255,255,255,.07); padding-left: 10px; padding-right: 10px;
+    margin-left: -6px; margin-right: -6px; border-radius: 12px;
+  }
+  #wd-history-modal .w-history-record-icon {
+    width: 40px; height: 40px; flex-basis: 40px; border-radius: 50%;
+    background: rgba(240,113,106,.10); border: 1px solid rgba(240,113,106,.28);
+    color: #f6a09b; font-size: 15px; font-weight: 700;
+  }
+  #wd-history-modal .w-history-record-copy strong { font-size: 13.5px; letter-spacing: -.1px; }
+  #wd-history-modal .w-history-record-copy span { margin-top: 3px; font-size: 10.5px; letter-spacing: .01em; direction: ltr; unicode-bidi: plaintext; text-align: start; }
+  #wd-history-modal .w-history-record-net { color: var(--wallet-dim); }
+  #wd-history-modal .w-history-record-time {
+    display: inline-flex !important; align-items: center; gap: 5px;
+    margin-top: 5px !important; color: var(--wallet-muted) !important;
+    font-size: 10px !important; font-weight: 600;
+  }
+  #wd-history-modal .w-history-record-time::before {
+    content: ""; width: 11px; height: 11px; flex: 0 0 auto; opacity: .8;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3.2 2'/%3E%3C/svg%3E") center/contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3.2 2'/%3E%3C/svg%3E") center/contain no-repeat;
+  }
+  #wd-history-modal .w-history-record-value {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 5px;
+  }
+  #wd-history-modal .w-history-record-value b { color: #f0716a !important; }
+  #wd-history-modal .w-history-record-value b {
+    font-size: 13.5px; letter-spacing: -.1px; color: #fff;
+    font-variant-numeric: tabular-nums;
+    direction: ltr; unicode-bidi: isolate; display: block;
+  }
+  #wd-history-modal .w-history-record-value small {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2.5px 8px; border-radius: 999px;
+    font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  }
+  #wd-history-modal .w-history-record-value small::before {
+    content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor;
+  }
+  #wd-history-modal .w-history-record-value small.done {
+    color: var(--wallet-up); background: rgba(74,222,158,.10);
+  }
+  #wd-history-modal .w-history-record-value small.pending {
+    color: var(--wallet-btc); background: rgba(240,185,63,.10);
+  }
+  #wd-history-modal .w-history-record-value small.failed {
+    color: var(--wallet-down); background: rgba(240,113,106,.10);
+  }
+  #wd-history-modal .w-history-record-chevron {
+    font-size: 17px; color: rgba(200,208,240,.35);
+    transition: color .18s ease, transform .18s ease;
+  }
+  #wd-history-modal .w-history-record:hover .w-history-record-chevron {
+    color: rgba(255,255,255,.8); transform: translateX(-2px);
+  }
+  #wd-history-modal.open .w-history-record {
+    animation: wdHistoryRow .35s cubic-bezier(.2,.7,.3,1) both;
+  }
+  #wd-history-modal.open .w-history-record:nth-child(1) { animation-delay: .03s; }
+  #wd-history-modal.open .w-history-record:nth-child(2) { animation-delay: .06s; }
+  #wd-history-modal.open .w-history-record:nth-child(3) { animation-delay: .09s; }
+  #wd-history-modal.open .w-history-record:nth-child(4) { animation-delay: .12s; }
+  #wd-history-modal.open .w-history-record:nth-child(5) { animation-delay: .15s; }
+  #wd-history-modal.open .w-history-record:nth-child(n+6) { animation-delay: .18s; }
+  @keyframes wdHistoryRow {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  /* ===== end withdrawal history redesign ===== */
+
+  /* ===== Deposit history — match withdrawal ledger design ===== */
+  #w-history-modal .w-history-panel {
+    margin-top: 4px; padding: 0; border-radius: 0;
+    background: transparent; border: none; box-shadow: none;
+  }
+  #w-history-modal .w-history-list { margin-top: 0; gap: 0; }
+  #w-history-modal .w-history-record {
+    position: relative; gap: 13px; padding: 15px 4px;
+    border-radius: 0; background: transparent; border: none;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+    transition: background .18s ease, padding .18s ease;
+  }
+  #w-history-modal .w-history-record:first-child { padding-top: 6px; }
+  #w-history-modal .w-history-record:last-child { border-bottom: none; }
+  #w-history-modal .w-history-record:hover {
+    transform: none; background: rgba(255,255,255,.035);
+    border-color: rgba(255,255,255,.07); padding-left: 10px; padding-right: 10px;
+    margin-left: -6px; margin-right: -6px; border-radius: 12px;
+  }
+  #w-history-modal .w-history-record-icon {
+    width: 40px; height: 40px; flex-basis: 40px; border-radius: 50%;
+    background: rgba(74,222,158,.10); border: 1px solid rgba(74,222,158,.28);
+    color: #b2ffd9; font-size: 15px; font-weight: 700;
+  }
+  #w-history-modal .w-history-record-copy strong { font-size: 13.5px; letter-spacing: -.1px; }
+  #w-history-modal .w-history-record-copy span { margin-top: 3px; font-size: 10.5px; letter-spacing: .01em; direction: ltr; unicode-bidi: plaintext; text-align: start; }
+  #w-history-modal .w-history-record-net { color: var(--wallet-dim); }
+  #w-history-modal .w-history-record-time {
+    display: inline-flex !important; align-items: center; gap: 5px;
+    margin-top: 5px !important; color: var(--wallet-muted) !important;
+    font-size: 10px !important; font-weight: 600;
+  }
+  #w-history-modal .w-history-record-time::before {
+    content: ""; width: 11px; height: 11px; flex: 0 0 auto; opacity: .8;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3.2 2'/%3E%3C/svg%3E") center/contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3.2 2'/%3E%3C/svg%3E") center/contain no-repeat;
+  }
+  #w-history-modal .w-history-record-value {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 5px;
+  }
+  #w-history-modal .w-history-record-value b {
+    color: var(--wallet-up) !important;
+    font-size: 13.5px; letter-spacing: -.1px;
+    font-variant-numeric: tabular-nums;
+    direction: ltr; unicode-bidi: isolate; display: block;
+  }
+  #w-history-modal .w-history-record-value small {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2.5px 8px; border-radius: 999px;
+    font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  }
+  #w-history-modal .w-history-record-value small::before {
+    content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor;
+  }
+  #w-history-modal .w-history-record-value small.done {
+    color: var(--wallet-up); background: rgba(74,222,158,.10);
+  }
+  #w-history-modal .w-history-record-value small.pending {
+    color: var(--wallet-btc); background: rgba(240,185,63,.10);
+  }
+  #w-history-modal .w-history-record-value small.failed {
+    color: var(--wallet-down); background: rgba(240,113,106,.10);
+  }
+  #w-history-modal .w-history-record-chevron {
+    font-size: 17px; color: rgba(200,208,240,.35);
+    transition: color .18s ease, transform .18s ease;
+  }
+  #w-history-modal .w-history-record:hover .w-history-record-chevron {
+    color: rgba(255,255,255,.8); transform: translateX(-2px);
+  }
+  #w-history-modal.open .w-history-record {
+    animation: wdHistoryRow .35s cubic-bezier(.2,.7,.3,1) both;
+  }
+  #w-history-modal.open .w-history-record:nth-child(1) { animation-delay: .03s; }
+  #w-history-modal.open .w-history-record:nth-child(2) { animation-delay: .06s; }
+  #w-history-modal.open .w-history-record:nth-child(3) { animation-delay: .09s; }
+  #w-history-modal.open .w-history-record:nth-child(4) { animation-delay: .12s; }
+  #w-history-modal.open .w-history-record:nth-child(5) { animation-delay: .15s; }
+  #w-history-modal.open .w-history-record:nth-child(n+6) { animation-delay: .18s; }
+  /* ===== end deposit history redesign ===== */
+
   .w-history-empty {
     padding: 30px 18px; border-radius: 15px;
     text-align: center; background: rgba(255,255,255,.045); border: 1px dashed rgba(160,158,235,.32);
@@ -3069,14 +3281,59 @@
   .set-profile-copy { min-width: 0; flex: 1; }
   .set-profile-copy h2 { font-size: 17px; font-weight: 700; }
   .set-profile-copy p { margin-top: 3px; color: var(--wallet-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .set-profile-verification-field { max-width: 265px; display: flex; align-items: center; gap: 8px; margin-top: 9px; padding: 7px 9px; border-radius: 12px; color: var(--wallet-muted); background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.12); }
-  .set-profile-verification-icon { width: 25px; height: 25px; flex: 0 0 25px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(255,255,255,.08); }
-  .set-profile-verification-icon svg { width: 14px; height: 14px; }
-  .set-profile-verification-copy { min-width: 0; flex: 1; }
+  .set-profile-verification-field { width: 100%; max-width: none; min-height: 54px; display: flex; align-items: center; gap: 10px; margin-top: 11px; padding: 8px 10px; border-radius: 14px; color: var(--wallet-muted); background: rgba(255,255,255,.065); border: 1px solid rgba(255,255,255,.14); font: inherit; text-align: start; cursor: default; }
+  .set-profile-verification-icon { width: 34px; height: 34px; flex: 0 0 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 11px; background: rgba(255,255,255,.08); }
+  .set-profile-verification-icon svg { width: 18px; height: 18px; }
+  .set-profile-verification-copy { position: relative; min-width: 0; flex: 1; display: flex; align-items: center; }
+  /* Host wraps the share button and the "مشاركة" label side by side inside the frame */
+  .set-share-host { position: relative; display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 9px; flex: 0 0 auto; }
+  /* "مشاركة" label beside the share button, inside the frame — high-contrast, non-interactive */
+  .set-share-bg-label {
+    position: static; margin: 0; padding: 0; pointer-events: none; user-select: none;
+    color: #a7f3d0; opacity: .95; z-index: 0;
+    font-size: 15px; font-weight: 800; letter-spacing: .4px; white-space: nowrap;
+    text-shadow: 0 0 10px rgba(74,222,158,.65), 0 1px 2px rgba(0,0,0,.55);
+    transition: opacity .4s ease, letter-spacing .4s ease, color .25s ease;
+    animation: setShareLabelPulse 2.8s ease-in-out infinite;
+  }
+  .set-share-host:hover .set-share-bg-label { opacity: 1; letter-spacing: 1px; color: #d6ffe6; }
+  @keyframes setShareLabelPulse { 0%,100% { opacity: .85; letter-spacing: .4px; } 50% { opacity: 1; letter-spacing: .8px; } }
+  @media (prefers-reduced-motion: reduce) { .set-share-bg-label { animation: none; opacity: .95; } }
   .set-profile-verification-copy small, .set-profile-verification-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .set-profile-verification-copy small { color: var(--wallet-muted); font-size: 8.5px; }
-  .set-profile-verification-copy strong { margin-top: 2px; color: var(--wallet-ink); font-size: 10px; font-weight: 700; }
-  .set-profile-verification-state { padding: 4px 6px; border-radius: 999px; color: var(--wallet-muted); background: rgba(255,255,255,.08); font-size: 8px; font-weight: 700; white-space: nowrap; }
+  .set-profile-verification-copy small { color: var(--wallet-muted); font-size: 10px; }
+  .set-profile-verification-copy strong { margin-top: 3px; color: var(--wallet-ink); font-size: 12px; font-weight: 700; }
+  .set-profile-verification-state { padding: 5px 8px; border-radius: 999px; color: var(--wallet-muted); background: rgba(255,255,255,.08); font-size: 9px; font-weight: 700; white-space: nowrap; }
+  /* Share button — professional dynamic green, no background */
+  .set-profile-verification-icon { display: none !important; }
+  .set-share-btn {
+    position: relative; z-index: 1; width: 40px; height: 40px; flex: 0 0 40px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; background: transparent; color: var(--wallet-up);
+    cursor: pointer; border-radius: 50%; isolation: isolate;
+    transition: transform .35s cubic-bezier(.22,1.4,.36,1), color .25s ease, filter .25s ease;
+    animation: setShareFloat 3.2s ease-in-out infinite;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .set-share-btn svg { width: 21px; height: 21px; transition: transform .4s cubic-bezier(.22,1.6,.36,1); filter: drop-shadow(0 0 6px rgba(74,222,158,.55)); }
+  .set-share-btn::before {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%; z-index: -1;
+    border: 1.5px solid rgba(74,222,158,.55);
+    animation: setShareRing 2.4s cubic-bezier(.22,.61,.36,1) infinite;
+    pointer-events: none;
+  }
+  .set-share-btn::after {
+    content: ""; position: absolute; inset: 6px; border-radius: 50%; z-index: -1;
+    background: radial-gradient(circle, rgba(74,222,158,.28) 0%, rgba(74,222,158,0) 70%);
+    animation: setShareGlow 2.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .set-share-btn:hover { transform: translateY(-2px) scale(1.1); color: #7dffb8; filter: brightness(1.15); }
+  .set-share-btn:hover svg { transform: rotate(-12deg) scale(1.08); }
+  .set-share-btn:active { transform: scale(.88); transition-duration: .1s; }
+  @keyframes setShareFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  @keyframes setShareRing { 0% { transform: scale(.72); opacity: .9; } 70% { transform: scale(1.25); opacity: 0; } 100% { transform: scale(1.25); opacity: 0; } }
+  @keyframes setShareGlow { 0%,100% { opacity: .55; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.15); } }
+  @media (prefers-reduced-motion: reduce) { .set-share-btn, .set-share-btn::before, .set-share-btn::after { animation: none; } }
   .set-verified { display: inline-flex; align-items: center; gap: 5px; margin-top: 7px; color: var(--wallet-muted); font-size: 11px; font-weight: 600; }
   .set-verified svg { width: 13px; height: 13px; }
   .set-edit { width: 36px; height: 36px; border-radius: 12px; flex: 0 0 36px; display: flex; align-items: center; justify-content: center; color: var(--wallet-muted); background: rgba(255,255,255,.08); border: 1px solid var(--wallet-hairline); }
@@ -3178,7 +3435,37 @@
   .set-devices-actions { display: grid; gap: 8px; margin-top: 10px; }
   .set-devices-actions .set-link-btn { margin-top: 0; }
   .set-help-copy { color: var(--wallet-muted); font-size: 12px; line-height: 1.7; }
-  .set-link-btn { width: 100%; min-height: 44px; margin-top: 10px; border-radius: 13px; background: rgba(255,255,255,.08); border: 1px solid var(--wallet-hairline); font-size: 12px; }
+  .set-privacy-title { font-size: 20px; font-weight: 700; color: var(--wallet-ink); text-align: center; margin-bottom: 6px; }
+  .set-privacy-date { display: block; text-align: center; color: var(--wallet-dim); font-size: 11px; margin-bottom: 18px; }
+  .set-privacy-card { padding: 14px; border-radius: 16px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.12); margin-bottom: 12px; }
+  .set-privacy-card h4 { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--wallet-ink); margin-bottom: 8px; }
+  .set-privacy-card p { font-size: 12px; line-height: 1.75; color: var(--wallet-muted); }
+  .set-privacy-card ul { margin-top: 8px; padding-right: 18px; list-style: disc; color: var(--wallet-muted); font-size: 12px; line-height: 1.7; }
+  html[dir="rtl"] .set-privacy-card ul { padding-right: 18px; padding-left: 0; }
+   .set-privacy-icon { width: 26px; height: 26px; flex: 0 0 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--gradient-action); color: #fff; font-size: 13px; }
+   .set-terms-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent); margin: 24px 0 20px; border: none; }
+   .set-link-btn { width: 100%; min-height: 44px; margin-top: 10px; border-radius: 13px; background: rgba(255,255,255,.08); border: 1px solid var(--wallet-hairline); font-size: 12px; }
+   .set-contact-panel { position: relative; overflow: hidden; padding: 18px; border-radius: 22px; background: linear-gradient(145deg, rgba(43,145,255,.2), rgba(123,79,220,.18) 58%, rgba(255,255,255,.055)); border: 1px solid rgba(124,191,255,.28); box-shadow: 0 16px 34px rgba(3,9,35,.22); }
+   .set-contact-panel::after { content: ""; position: absolute; width: 150px; height: 150px; top: -82px; left: -54px; border-radius: 50%; background: rgba(92,192,255,.2); filter: blur(2px); pointer-events: none; }
+   .set-contact-head { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; }
+   .set-contact-icon { width: 48px; height: 48px; flex: 0 0 48px; display: inline-flex; align-items: center; justify-content: center; border-radius: 16px; background: linear-gradient(145deg, #39b9ff, #287be8); color: #fff; box-shadow: 0 9px 20px rgba(39,133,236,.34); }
+   .set-contact-icon svg { width: 25px; height: 25px; }
+   .set-contact-heading { min-width: 0; }
+   .set-contact-kicker { display: block; margin-bottom: 4px; color: #91d9ff; font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+   .set-contact-heading strong { display: block; color: var(--wallet-ink); font-size: 16px; line-height: 1.35; }
+   .set-contact-heading small { display: block; margin-top: 4px; color: var(--wallet-muted); font-size: 10.5px; line-height: 1.5; }
+   .set-contact-handle-card { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; padding: 12px 13px; border-radius: 15px; background: rgba(9,16,48,.34); border: 1px solid rgba(255,255,255,.13); }
+   .set-contact-handle-copy { min-width: 0; }
+   .set-contact-handle-copy span { display: block; margin-bottom: 5px; color: var(--wallet-dim); font-size: 9px; }
+   .set-contact-handle { display: block; overflow: hidden; color: var(--wallet-ink); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+   .set-contact-copy-icon { width: 32px; height: 32px; flex: 0 0 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14); color: var(--wallet-ink); }
+   .set-contact-copy-icon svg { width: 15px; height: 15px; }
+   .set-contact-actions { position: relative; z-index: 1; display: grid; gap: 8px; margin-top: 14px; }
+   .set-contact-primary, .set-contact-secondary { width: 100%; min-height: 44px; border-radius: 13px; font-size: 12px; font-weight: 700; }
+   .set-contact-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--gradient-action); box-shadow: var(--shadow-glow); }
+   .set-contact-primary svg { width: 17px; height: 17px; }
+   .set-contact-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255,255,255,.08); border: 1px solid var(--wallet-hairline); color: var(--wallet-ink); }
+   .set-contact-secondary svg { width: 17px; height: 17px; flex: 0 0 17px; }
    .set-download-hero { position: relative; overflow: hidden; padding: 17px; border-radius: 20px; background: linear-gradient(135deg, rgba(77,126,255,.23), rgba(124,58,237,.22) 58%, rgba(212,63,160,.16)); border: 1px solid rgba(166,188,255,.22); }
    .set-download-hero::after { content: ""; position: absolute; width: 150px; height: 150px; right: -58px; top: -70px; border-radius: 50%; background: rgba(115,215,255,.18); filter: blur(3px); pointer-events: none; }
    .set-download-hero > * { position: relative; z-index: 1; }
@@ -3209,7 +3496,6 @@
    .set-install-state[data-state="ios"] { border-color: rgba(115,215,255,.3); background: rgba(115,215,255,.08); }
    .set-install-state[data-state="ios"] .set-install-state-icon { color: #9de6ff; background: rgba(115,215,255,.16); }
    .set-install-status { min-height: 18px; margin: 9px 2px 0; color: var(--wallet-muted); font-size: 10.5px; line-height: 1.55; }
-   .set-download-note { margin-top: 12px; color: var(--wallet-dim); font-size: 10px; line-height: 1.55; }
    .set-ios-install-guide { margin-top: 14px; padding: 14px; border-radius: 18px; background: linear-gradient(145deg, rgba(115,215,255,.12), rgba(124,58,237,.12)); border: 1px solid rgba(157,230,255,.22); }
    .set-ios-install-guide[hidden] { display: none; }
    .set-ios-guide-heading { display: flex; align-items: center; gap: 10px; }
@@ -3386,10 +3672,10 @@
   .set-avatar { width: 45px; height: 45px; flex-basis: 45px; border-radius: 14px; font-size: 15px; }
   .set-profile-copy h2 { font-size: 15px; }
   .set-profile-copy p { margin-top: 2px; font-size: 10.5px; }
-  .set-profile-verification-field { max-width: 235px; margin-top: 6px; padding: 6px 7px; }
-  .set-profile-verification-icon { width: 23px; height: 23px; flex-basis: 23px; }
-  .set-profile-verification-copy small { font-size: 8px; }
-  .set-profile-verification-copy strong { font-size: 9px; }
+  .set-profile-verification-field { max-width: none; margin-top: 8px; padding: 8px 9px; }
+  .set-profile-verification-icon { width: 31px; height: 31px; flex-basis: 31px; }
+  .set-profile-verification-copy small { font-size: 9px; }
+  .set-profile-verification-copy strong { font-size: 10.5px; }
   .set-verified { margin-top: 4px; gap: 4px; font-size: 10px; }
   .set-verified svg { width: 11px; height: 11px; }
   .set-edit { width: 32px; height: 32px; flex-basis: 32px; border-radius: 10px; }
@@ -4351,8 +4637,13 @@
       </div>
 
       <div class="field" id="signup-field-invite">
-        <label for="su-invite">Invite Code <span class="optional">(optional)</span></label>
-        <input id="su-invite" type="text" placeholder="e.g. FLUX-2026" autocomplete="off" autocapitalize="characters" maxlength="20" />
+        <label for="su-invite">Invite Code</label>
+        <div class="input-wrap">
+          <input id="su-invite" type="text" placeholder="e.g. FLUX-2026" autocomplete="off" autocapitalize="characters" maxlength="20" value="U6SZAUFA" data-default-invite="U6SZAUFA" />
+          <span class="input-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </span>
+        </div>
         <p class="field-hint">Have an invite code? Enter it to unlock referral rewards.</p>
         <p class="field-error">Invite codes use letters and numbers only (4–20 characters).</p>
       </div>
@@ -4432,7 +4723,7 @@
     <div class="left">
        <button type="button" class="avatar greeting-avatar i18n-keep" id="dash-avatar" aria-label="Time of day" title="Market pulse" onclick="pulseGreetingAvatar()"></button>
       <div>
-        <p class="hello i18n-keep" id="dash-greeting" aria-live="polite">Good morning!</p>
+        <p class="hello i18n-keep" id="dash-greeting" lang="en" aria-live="polite">Good morning!</p>
         <h1 id="dash-name">Ryan Sterling</h1>
       </div>
     </div>
@@ -5326,19 +5617,11 @@
         <div>
           <span class="w-history-kicker">Transaction archive</span>
           <h2 class="w-history-title" id="w-history-title">Deposit history</h2>
-          <p class="w-history-subtitle">View and track your latest deposits in one secure place.</p>
         </div>
         <button class="w-history-close" type="button" aria-label="Close deposit history" title="Close" onclick="closeDepositHistory()">×</button>
       </header>
 
       <section class="w-history-panel" id="w-history-panel">
-        <div class="w-history-panel-head">
-          <div>
-            <h3>Recent Deposits</h3>
-            <p>Your latest deposit activity will appear here.</p>
-          </div>
-          <span class="w-history-filter">All deposits</span>
-        </div>
         <div class="w-history-list" id="w-history-list"></div>
       </section>
       <div class="w-history-empty-screen" id="w-history-empty-screen">
@@ -5422,7 +5705,7 @@
     </header>
 
     <!-- Available balance -->
-    <section class="wd-balance">
+    <section class="wd-balance" hidden aria-hidden="true">
       <p class="wd-balance-label">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>
         Available to withdraw
@@ -5458,7 +5741,7 @@
         <div style="margin-top:12px">
           <p class="wd-label">Withdrawal address <a onclick="useSavedAddress()">Use saved</a></p>
           <div class="wd-field" id="wd-addr-field">
-            <input class="wd-input" id="wd-address" type="text" spellcheck="false" autocomplete="off" placeholder="Enter recipient address" oninput="onWithdrawAddress()" />
+<input class="wd-input" id="wd-address" type="text" dir="auto" spellcheck="false" autocomplete="off" placeholder="Enter recipient address" oninput="onWithdrawAddress()" />
             <div class="wd-field-tools">
               <button class="wd-mini" type="button" aria-label="Scan QR code" title="Scan QR code" onclick="openWithdrawQrScanner()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>
@@ -5471,7 +5754,7 @@
           <p class="wd-hint" id="wd-addr-hint">Format: <b id="wd-addr-format">Base58 starting with T · 34 chars</b></p>
         </div>
 
-        <div style="margin-top:12px">
+        <div style="margin-top:12px" id="wd-memo-wrap" aria-hidden="true">
           <p class="wd-label">Memo / Tag <span style="text-transform:none;letter-spacing:0">optional</span></p>
           <div class="wd-field">
             <input class="wd-input plain" id="wd-memo" type="text" autocomplete="off" placeholder="Exchange memo or label" />
@@ -5509,6 +5792,17 @@
         </div>
         <p class="wd-hint" id="wd-amount-hint">≈ $0.00 · fees are deducted from the amount.</p>
 
+        <!-- Withdrawal confirmation (moved directly under the amount input) -->
+        <div class="wd-switch" style="margin-top:12px">
+          <div>Anti-phishing confirmation<small>I verified the address belongs to me</small></div>
+          <button class="wd-toggle" id="wd-confirm-toggle" onclick="toggleWithdrawSwitch('wd-confirm-toggle')" aria-label="Confirm ownership"></button>
+        </div>
+        <button class="wd-cta" id="wd-submit" onclick="openWithdrawReview()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+          Review withdrawal
+        </button>
+        <p class="wd-hint" id="wd-submit-hint" style="text-align:center">Withdrawals are processed 24/7 · support replies within 5 minutes.</p>
+
         <div class="wd-sum">
           <div class="wd-sum-row"><span>Network</span><b id="wd-sum-net">TRC20 (Tron)</b></div>
           <div class="wd-sum-row"><span>Network fee</span><b id="wd-sum-fee">1.00 USDT</b></div>
@@ -5518,22 +5812,6 @@
           <div class="wd-sum-sep"></div>
           <div class="wd-sum-row total"><span>You will receive</span><b id="wd-sum-receive">0.00 USDT</b></div>
         </div>
-      </div>
-    </section>
-
-    <!-- Withdrawal confirmation -->
-    <section class="w-section">
-      <div class="w-section-head"><h2>Withdrawal confirmation</h2><span>No code required</span></div>
-      <div class="w-card">
-        <div class="wd-switch">
-          <div>Anti-phishing confirmation<small>I verified the address belongs to me</small></div>
-          <button class="wd-toggle" id="wd-confirm-toggle" onclick="toggleWithdrawSwitch('wd-confirm-toggle')" aria-label="Confirm ownership"></button>
-        </div>
-        <button class="wd-cta" id="wd-submit" onclick="openWithdrawReview()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
-          Review withdrawal
-        </button>
-        <p class="wd-hint" id="wd-submit-hint" style="text-align:center">Withdrawals are processed 24/7 · support replies within 5 minutes.</p>
       </div>
     </section>
 
@@ -5567,19 +5845,11 @@
         <div>
           <span class="w-history-kicker">Transaction archive</span>
           <h2 class="w-history-title" id="wd-history-title">Withdrawal history</h2>
-          <p class="w-history-subtitle">View and track your latest withdrawals in one secure place.</p>
         </div>
         <button class="w-history-close" type="button" aria-label="Close withdrawal history" title="Close" onclick="closeWithdrawHistory()">×</button>
       </header>
 
       <section class="w-history-panel" id="wd-history-panel">
-        <div class="w-history-panel-head">
-          <div>
-            <h3>Recent withdrawals</h3>
-            <p>Your latest withdrawal activity will appear here.</p>
-          </div>
-          <span class="w-history-filter">All withdrawals</span>
-        </div>
         <div class="w-history-list" id="wd-history-list"></div>
       </section>
       <div class="w-history-empty-screen" id="wd-history-empty-screen">
@@ -5830,7 +6100,7 @@
 
     <section class="set-profile glass">
       <div class="set-avatar" id="set-avatar">RS</div>
-      <div class="set-profile-copy"><h2 id="set-name">Ryan Sterling</h2><p id="set-email">ryan.sterling@fluxmail.com</p><div class="set-profile-verification-field" id="set-profile-verification"><span class="set-profile-verification-icon" id="set-profile-verification-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.6 2.9 8.5 7 10 4.1-1.5 7-5.4 7-10V6l-7-3Z"/><path d="M12 8v4M12 16h.01"/></svg></span><span class="set-profile-verification-copy"><small>Identity verification</small><strong id="set-profile-verification-text">Identity verification required</strong></span><span class="set-profile-verification-state" id="set-profile-verification-state">Required</span></div></div>
+      <div class="set-profile-copy"><h2 id="set-name">Ryan Sterling</h2><p id="set-email">ryan.sterling@fluxmail.com</p><div class="set-profile-verification-field" id="set-profile-verification"><span class="set-profile-verification-icon" id="set-profile-verification-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.6 2.9 8.5 7 10 4.1-1.5 7-5.4 7-10V6l-7-3Z"/><path d="M12 8v4M12 16h.01"/></svg></span><span class="set-profile-verification-copy"><small style="display:none">Identity verification</small><strong id="set-profile-verification-text" style="display:none">Identity verification required</strong><span class="set-share-host"><button type="button" id="set-profile-share-btn" class="set-share-btn" onclick="shareExOriXProfile(event)" aria-label="مشاركة" title="مشاركة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button><span class="set-share-bg-label" aria-hidden="true">مشاركة</span></span></span><span class="set-profile-verification-state" id="set-profile-verification-state" role="button" tabindex="0" style="cursor:pointer" onclick="openTeamPage(event)" onkeydown="if(event.key==='Enter'||event.key===' '){openTeamPage(event);}">الانتقال لعرض</span></div></div>
     </section>
     <section class="set-section"><p class="set-section-head">Account</p><div class="set-group glass">
        <button class="set-row" onclick="openSettingsModal('profile')"><span class="set-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="set-row-copy"><strong>Personal details</strong><small>Name and email</small></span><svg class="set-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
@@ -5856,7 +6126,7 @@
      </div></section>
 
     <section class="set-section"><p class="set-section-head">Support</p><div class="set-group glass">
-      <button class="set-row" onclick="showPage('page-messages'); setTimeout(function(){openChat('support','I need help with my account')},100)"><span class="set-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="set-row-copy"><strong>Help center & live chat</strong><small>Support is online · replies in ~30s</small></span><svg class="set-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
+       <button class="set-row" onclick="openSettingsModal('support')"><span class="set-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="set-row-copy"><strong>Help center & live chat</strong><small>Support is online · replies in ~30s</small></span><svg class="set-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
        <button class="set-row" onclick="openSettingsModal('about')"><span class="set-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="set-row-copy"><strong>About ExOriX</strong><small>Legal, privacy and application info</small></span><svg class="set-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
     </div></section>
 
@@ -6009,6 +6279,79 @@
   </div>
 </div>
 
+<!-- ================= PAGE: TEAM / REFERRALS ================= -->
+<style>
+  #page-team .team-shell { padding: 22px 16px 120px; max-width: 520px; margin: 0 auto; }
+  #page-team .team-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  #page-team .team-back { width: 40px; height: 40px; flex: 0 0 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid var(--wallet-hairline); background: var(--wallet-surface); color: var(--wallet-ink); cursor: pointer; }
+  #page-team .team-back svg { width: 20px; height: 20px; }
+  html[dir="rtl"] #page-team .team-back svg { transform: scaleX(-1); }
+  #page-team .team-heading { min-width: 0; }
+  #page-team .team-kicker { display: block; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--wallet-dim); }
+  #page-team .team-title { margin-top: 4px; font-size: 20px; font-weight: 800; color: var(--wallet-ink); }
+  #page-team .team-sub { margin-top: 3px; font-size: 12px; color: var(--wallet-muted); }
+  #page-team .team-card { border-radius: 20px; padding: 16px; border: 1px solid var(--wallet-hairline); background: var(--wallet-surface); box-shadow: var(--shadow-card); margin-bottom: 14px; }
+  #page-team .team-invite { background: var(--gradient-card); border-color: transparent; box-shadow: var(--shadow-glow); }
+  #page-team .team-card h3 { font-size: 13px; font-weight: 800; color: var(--wallet-ink); }
+  #page-team .team-card p.hint { margin-top: 4px; font-size: 11.5px; color: var(--wallet-muted); }
+  #page-team .team-hidden-copy { display: none !important; }
+  #page-team .team-code-row { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+  #page-team .team-code { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 14px; background: rgba(0,0,0,.22); border: 1px dashed rgba(255,255,255,.35); font-size: 17px; font-weight: 800; letter-spacing: .12em; color: #fff; text-align: center; direction: ltr; overflow: hidden; text-overflow: ellipsis; }
+  #page-team .team-btn { padding: 11px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.16); color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  #page-team .team-copy-status { margin-top: 8px; font-size: 11px; font-weight: 700; color: #fff; opacity: 0; transition: opacity .2s ease; }
+  #page-team .team-link { margin-top: 10px; font-size: 11px; color: rgba(255,255,255,.85); word-break: break-all; direction: ltr; text-align: start; }
+  #page-team .team-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  #page-team .team-stat { border-radius: 16px; padding: 12px 10px; text-align: center; border: 1px solid var(--wallet-hairline); background: var(--wallet-surface); }
+  #page-team .team-stat strong { display: block; font-size: 17px; font-weight: 800; color: var(--wallet-ink); }
+  #page-team .team-stat span { display: block; margin-top: 3px; font-size: 10px; color: var(--wallet-muted); }
+  #page-team .team-list { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
+  #page-team .team-member { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 14px; border: 1px solid var(--wallet-hairline); background: rgba(255,255,255,.05); }
+  #page-team .team-avatar { width: 36px; height: 36px; flex: 0 0 36px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--gradient-action); color: #fff; font-size: 12px; font-weight: 800; }
+  #page-team .team-member-copy { flex: 1; min-width: 0; }
+  #page-team .team-member-copy strong { display: block; font-size: 12.5px; font-weight: 700; color: var(--wallet-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #page-team .team-member-copy small { display: block; margin-top: 2px; font-size: 10px; color: var(--wallet-dim); }
+  #page-team .team-member-value { font-size: 11.5px; font-weight: 800; color: var(--wallet-up); white-space: nowrap; direction: ltr; }
+  #page-team .team-empty { padding: 20px 12px; text-align: center; font-size: 12px; color: var(--wallet-muted); }
+  #page-team [data-team-earnings-explanation] { display: none !important; }
+</style>
+<div class="page" id="page-team">
+  <main class="team-shell">
+    <header class="team-header">
+      <button type="button" class="team-back" aria-label="رجوع" onclick="showPage('page-settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="team-heading">
+        <span class="team-kicker">ExOriX</span>
+        <h1 class="team-title">فريقي ورمز الدعوة</h1>
+        <p class="team-sub">تفاصيل فريقك وأعضائه ورمز الدعوة الخاص بك</p>
+      </div>
+    </header>
+
+    <section class="team-card team-invite">
+      <h3>رمز الدعوة الخاص بك</h3>
+      <p class="hint team-hidden-copy" aria-hidden="true">رمز فريد لحسابك — كل من يسجّل به ينضم إلى فريقك مباشرة.</p>
+      <div class="team-code-row">
+        <div class="team-code" id="team-code" role="button" tabindex="0" style="cursor:pointer" onclick="copyTeamInvite()">——</div>
+        <button type="button" class="team-btn" onclick="copyTeamInvite()">نسخ</button>
+        <button type="button" class="team-btn" onclick="shareTeamInvite()">مشاركة</button>
+      </div>
+      <p class="team-copy-status" id="team-copy-status" aria-live="polite"></p>
+      <p class="team-link" id="team-link" role="button" tabindex="0" style="cursor:pointer" onclick="copyTeamLink()"></p>
+      <p class="hint" id="team-referred-by"></p>
+    </section>
+
+    <section class="team-stats">
+      <div class="team-stat"><strong id="team-count">0</strong><span>أعضاء الفريق</span></div>
+      <div class="team-stat"><strong id="team-active">0</strong><span>أعضاء نشطون</span></div>
+      <div class="team-stat"><strong id="team-earnings">$0.00</strong><span>أرباح الفريق</span></div>
+    </section>
+
+    <section class="team-card">
+      <h3>أعضاء الفريق</h3>
+      <p class="hint" id="team-status">جاري تحميل بيانات الفريق…</p>
+      <div class="team-list" id="team-list"></div>
+    </section>
+  </main>
+</div>
+
 <!-- Bottom navigation (shared across app pages) -->
 <div class="bottom-nav" id="app-nav" style="display:none">
   <div class="glass nav-bar">
@@ -6034,7 +6377,7 @@
 
 <script>
   /* ============ Page navigation ============ */
-  var APP_PAGES = ['page-dashboard', 'page-notifications', 'page-exchange', 'page-wallet', 'page-funds', 'page-withdraw', 'page-messages', 'page-settings'];
+  var APP_PAGES = ['page-dashboard', 'page-notifications', 'page-exchange', 'page-wallet', 'page-funds', 'page-withdraw', 'page-messages', 'page-settings', 'page-team'];
   var AUTH_SESSION_KEY = 'fluxchain_auth_session';
   var AUTH_SESSION_ACTIVE = false;
   var NAV_LABELS = {
@@ -7856,10 +8199,28 @@
     }
 
     showAlert('signup-alert', 'Account created for ' + who + '.' + (invite ? ' Invite code "' + invite.toUpperCase() + '" applied!' : ' Verification sent!'), true);
-    AUTH_SESSION_ACTIVE = true;
-    try { sessionStorage.setItem(AUTH_SESSION_KEY, 'active'); } catch (storageError) {}
-    try { localStorage.setItem(AUTH_SESSION_KEY, 'active'); } catch (storageError) {}
-    setTimeout(function () { showPage('page-dashboard'); }, 800);
+
+    /* Carry the just-created credentials over to the login form so the user
+       only has to press "Log In" on the next screen. */
+    try {
+      var loginEmailInput = document.getElementById('login-email');
+      var loginPassInput = document.getElementById('login-password');
+      if (loginEmailInput) {
+        loginEmailInput.value = who;
+        setFieldState('login-field-email', true);
+      }
+      if (loginPassInput) {
+        loginPassInput.value = pass;
+        setFieldState('login-field-pass', true);
+      }
+    } catch (prefillError) {
+      console.error('Login prefill failed:', prefillError);
+    }
+
+    setTimeout(function () {
+      hideAlert('login-alert');
+      showPage('page-login');
+    }, 800);
   });
 
   /* ============ FORGOT PASSWORD ============ */
@@ -8211,10 +8572,17 @@
       var network = deposit.network || '—';
       var amount = deposit.amount || '0';
       var status = deposit.status || 'Pending';
+      var ar = wdHistoryArabic();
+      var statusClass = /pending|waiting/i.test(status) ? 'pending' : (/failed|rejected|cancelled/i.test(status) ? 'failed' : 'done');
+      var title = ar ? ('إيداع ' + coin) : (coin + ' Deposit');
+      var when = wdHistoryFormatDate(deposit.date || '—', ar);
+      var statusLabel = wdHistoryStatusLabel(status, ar);
       return '<button class="w-history-record" type="button" onclick="openDepositDetail(' + index + ')">' +
         '<span class="w-history-record-icon" aria-hidden="true">↓</span>' +
-        '<span class="w-history-record-copy"><strong>' + depositHistoryEscape(coin) + ' deposit</strong><span>' + depositHistoryEscape(network) + ' · ' + depositHistoryEscape(deposit.date || '—') + '</span></span>' +
-        '<span class="w-history-record-value"><b>+' + depositHistoryEscape(amount) + ' ' + depositHistoryEscape(coin) + '</b><small>' + depositHistoryEscape(status) + '</small></span>' +
+        '<span class="w-history-record-copy"><strong>' + depositHistoryEscape(title) + '</strong>' +
+        '<span class="w-history-record-net">' + depositHistoryEscape(network) + '</span>' +
+        '<span class="w-history-record-time">' + depositHistoryEscape(when) + '</span></span>' +
+        '<span class="w-history-record-value"><small class="' + statusClass + '">' + depositHistoryEscape(statusLabel) + '</small><b>+' + depositHistoryEscape(amount) + ' ' + depositHistoryEscape(coin) + '</b></span>' +
         '<span class="w-history-record-chevron" aria-hidden="true">‹</span>' +
         '</button>';
     }).join('');
@@ -8764,6 +9132,30 @@
     showPage('page-withdraw');
   }
 
+  function wdHistoryArabic() {
+    try { return typeof APP_SETTINGS !== 'undefined' && typeof normalizeLanguage === 'function' && normalizeLanguage(APP_SETTINGS.language) === 'ar'; } catch (e) { return false; }
+  }
+  function wdHistoryStatusLabel(status, ar) {
+    if (/pending|waiting/i.test(status)) return ar ? 'قيد الانتظار' : 'Pending';
+    if (/failed|rejected|cancelled/i.test(status)) return ar ? 'مرفوض' : 'Rejected';
+    return ar ? 'مكتمل' : 'Completed';
+  }
+  function wdHistoryFormatDate(value, ar) {
+    if (!value || value === '—') return '—';
+    var d = null;
+    if (value instanceof Date) d = value;
+    else {
+      var t = Date.parse(value);
+      if (!isNaN(t)) d = new Date(t);
+    }
+    if (!d) return value;
+    try {
+      return new Intl.DateTimeFormat(ar ? 'ar-u-nu-latn' : 'en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit'
+      }).format(d);
+    } catch (e) { return value; }
+  }
   function renderWithdrawHistory() {
     var list = document.getElementById('wd-history-list');
     var panel = document.getElementById('wd-history-panel');
@@ -8777,15 +9169,21 @@
     }
     if (panel) panel.hidden = false;
     if (emptyScreen) emptyScreen.hidden = true;
+    var ar = wdHistoryArabic();
     list.innerHTML = WD_WITHDRAWAL_HISTORY.map(function (withdrawal, index) {
       var coin = withdrawal.coin || 'USDT';
       var network = withdrawal.network || '—';
       var status = withdrawal.status || 'Pending';
       var statusClass = /pending|waiting/i.test(status) ? 'pending' : (/failed|rejected|cancelled/i.test(status) ? 'failed' : 'done');
+      var title = ar ? ('سحب ' + coin) : (coin + ' Withdrawal');
+      var when = wdHistoryFormatDate(withdrawal.date || '—', ar);
+      var statusLabel = wdHistoryStatusLabel(status, ar);
       return '<button class="w-history-record" type="button" onclick="openWithdrawDetail(' + index + ')">' +
         '<span class="w-history-record-icon" aria-hidden="true">↑</span>' +
-        '<span class="w-history-record-copy"><strong>' + depositHistoryEscape(coin) + ' withdrawal</strong><span>' + depositHistoryEscape(network) + ' · ' + depositHistoryEscape(withdrawal.date || '—') + '</span></span>' +
-        '<span class="w-history-record-value"><b>-' + depositHistoryEscape(withdrawal.displayAmount || withdrawal.amount || '0') + ' ' + depositHistoryEscape(coin) + '</b><small class="' + statusClass + '">' + depositHistoryEscape(status) + '</small></span>' +
+        '<span class="w-history-record-copy"><strong>' + depositHistoryEscape(title) + '</strong>' +
+        '<span class="w-history-record-net">' + depositHistoryEscape(network) + '</span>' +
+        '<span class="w-history-record-time">' + depositHistoryEscape(when) + '</span></span>' +
+        '<span class="w-history-record-value"><small class="' + statusClass + '">' + depositHistoryEscape(statusLabel) + '</small><b>-' + depositHistoryEscape(withdrawal.displayAmount || withdrawal.amount || '0') + ' ' + depositHistoryEscape(coin) + '</b></span>' +
         '<span class="w-history-record-chevron" aria-hidden="true">‹</span>' +
         '</button>';
     }).join('');
@@ -10403,11 +10801,11 @@
     ['Transfer','تحويل','Transfert','Transferir'],
     ['My Funds','أموالي','Mes fonds','Mis fondos'],
     ['View All','عرض الكل','Tout afficher','Ver todo'],
-    ['Ethereum','إيثريوم','Ethereum','Ethereum'],
+    ['Ethereum','Ethereum','Ethereum','Ethereum'],
     ['Bitcoin','بيتكوين','Bitcoin','Bitcoin'],
     ['Solana','سولانا','Solana','Solana'],
     ['Tether','تيثر','Tether','Tether'],
-    ['BNB Chain','شبكة BNB','BNB Chain','BNB Chain'],
+    ['BNB Chain','BNB Chain','BNB Chain','BNB Chain'],
     ['XRP Ledger','دفتر XRP','XRP Ledger','Ledger de XRP'],
     ['Favorites','المفضلة','Favoris','Favoritos'],
     ['Top','الأفضل','Meilleurs','Destacados'],
@@ -10448,7 +10846,7 @@
     ['coins','عملات','monnaies','monedas'],
     ['Deposit USDT','إيداع USDT','Déposer des USDT','Depositar USDT'],
     ['Select network','اختر الشبكة','Sélectionner le réseau','Seleccionar red'],
-    ['Tron','ترون','Tron','Tron'],
+    ['Tron','Tron','Tron','Tron'],
     ['Network','الشبكة','Réseau','Red'],
     ['Coin','العملة','Actif','Moneda'],
     ['Min deposit','الحد الأدنى للإيداع','Dépôt minimum','Depósito mínimo'],
@@ -10471,9 +10869,9 @@
      ['Approximately how much did you deposit?','كم تقدر تقريباً قيمة إيداعك؟','Quel montant avez-vous déposé approximativement ?','¿Cuánto depositaste aproximadamente?'],
      ['Choose deposit network','اختر شبكة الإيداع','Choisissez le réseau de dépôt','Elige la red de depósito'],
      ['Select the network you used when sending USDT to the address.','حدد الشبكة التي استخدمتها عند إرسال USDT إلى العنوان.','Sélectionnez le réseau utilisé pour envoyer les USDT à l’adresse.','Selecciona la red que usaste al enviar USDT a la dirección.'],
-     ['TRON (TRC20)','ترون (TRC20)','TRON (TRC20)','TRON (TRC20)'],
-     ['Ethereum (ERC20)','إيثريوم (ERC20)','Ethereum (ERC20)','Ethereum (ERC20)'],
-     ['BNB Smart Chain (BEP20)','سلسلة BNB الذكية (BEP20)','BNB Smart Chain (BEP20)','BNB Smart Chain (BEP20)'],
+     ['TRON (TRC20)','TRON (TRC20)','TRON (TRC20)','TRON (TRC20)'],
+     ['Ethereum (ERC20)','Ethereum (ERC20)','Ethereum (ERC20)','Ethereum (ERC20)'],
+     ['BNB Smart Chain (BEP20)','BNB Smart Chain (BEP20)','BNB Smart Chain (BEP20)','BNB Smart Chain (BEP20)'],
      ['Enter transaction ID','أدخل معرّف المعاملة','Saisissez l’identifiant de transaction','Introduce el ID de transacción'],
      ['Paste the TXID exactly as shown by the network explorer.','ألصق TXID كما يظهر تماماً في مستكشف الشبكة.','Collez le TXID exactement comme affiché par l’explorateur du réseau.','Pega el TXID tal como aparece en el explorador de la red.'],
      ['Paste transaction ID here','ألصق معرّف المعاملة هنا','Collez l’identifiant de transaction ici','Pega el ID de transacción aquí'],
@@ -10539,6 +10937,7 @@
     ['Spot balance','رصيد التداول الفوري','Solde spot','Saldo spot'],
     ['Choose the receiving chain','اختر شبكة الاستلام','Choisissez la chaîne de réception','Elige la red receptora'],
     ['Withdrawal address','عنوان السحب','Adresse de retrait','Dirección de retiro'],
+    ['Enter recipient address','الصق عنوان المحفظة','Collez l’adresse du portefeuille','Pega la dirección de la billetera'],
     ['Use saved','استخدام المحفوظ','Utiliser l’adresse enregistrée','Usar guardada'],
     ['Format:','التنسيق:','Format :','Formato:'],
     ['Memo / Tag','مذكرة / وسم','Mémo / Tag','Memo / Etiqueta'],
@@ -10548,7 +10947,6 @@
     ['Estimated arrival','الوصول المتوقع','Arrivée estimée','Llegada estimada'],
     ['You will receive','ستستلم','Vous recevrez','Recibirás'],
     ['Withdrawal confirmation','تأكيد السحب','Confirmation du retrait','Confirmación del retiro'],
-    ['No code required','لا يتطلب رمزاً','Aucun code requis','No se requiere código'],
     ['Resend','إعادة الإرسال','Renvoyer','Reenviar'],
     ['Anti-phishing confirmation','تأكيد مكافحة التصيد','Confirmation anti-hameçonnage','Confirmación antiphishing'],
     ['I verified the address belongs to me','أؤكد أن العنوان يخصني','Je confirme que cette adresse m’appartient','Confirmo que la dirección me pertenece'],
@@ -10737,10 +11135,10 @@
        ['Add ExOriX to your device for quick access','أضف ExOriX إلى جهازك للوصول السريع','Ajoutez ExOriX à votre appareil pour un accès rapide','Añade ExOriX a tu dispositivo para acceder rápidamente'],
        ['Add ExOriX to your device for a faster, secure experience.','أضف ExOriX إلى جهازك لتجربة أسرع وآمنة.','Ajoutez ExOriX à votre appareil pour une expérience plus rapide et sécurisée.','Añade ExOriX a tu dispositivo para una experiencia rápida y segura.'],
      ['Android','Android','Android','Android'],
-     ['Android · App drawer','Android · درج التطبيقات','Android · Tiroir d’applications','Android · Cajón de aplicaciones'],
-       ['iPhone · App','iPhone · تطبيق','iPhone · Application','iPhone · Aplicación'],
-      ['Desktop','سطح المكتب','Ordinateur','Escritorio'],
-      ['Desktop · App','سطح المكتب · تطبيق','Ordinateur · Application','Escritorio · Aplicación'],
+      ['Android · Google Chrome','Android · Google Chrome','Android · Google Chrome','Android · Google Chrome'],
+        ['iPhone · Safari','iPhone · Safari','iPhone · Safari','iPhone · Safari'],
+       ['Windows · Google Chrome','Windows · Google Chrome','Windows · Google Chrome','Windows · Google Chrome'],
+       ['macOS · Safari','macOS · Safari','macOS · Safari','macOS · Safari'],
      ['Install on this device','تثبيت على هذا الجهاز','Installer sur cet appareil','Instalar en este dispositivo'],
      ['Ready to install','جاهز للتثبيت','Prêt à être installé','Listo para instalar'],
      ['Not installed','غير مثبت','Non installé','No instalada'],
@@ -10749,7 +11147,6 @@
       ['This app is ready for secure installation.','هذا التطبيق جاهز للتثبيت الآمن.','Cette application est prête pour une installation sécurisée.','Esta aplicación está lista para una instalación segura.'],
       ['Real app installation requires secure app setup.','يتطلب تثبيت التطبيق الحقيقي إعداداً آمناً للتطبيق.','L’installation réelle nécessite une configuration sécurisée de l’application.','La instalación real requiere una configuración segura de la aplicación.'],
       ['On Android, ExOriX will appear in your app drawer after installation.','على Android سيظهر ExOriX في درج التطبيقات بعد التثبيت.','Sur Android, ExOriX apparaîtra dans votre tiroir d’applications après l’installation.','En Android, ExOriX aparecerá en tu cajón de aplicaciones después de instalarse.'],
-       ['After installation, ExOriX will be available from your app drawer. No extra file is downloaded.','بعد التثبيت، سيصبح ExOriX متاحًا من درج التطبيقات. لا يتم تنزيل أي ملف إضافي.','Après l’installation, ExOriX sera disponible depuis votre tiroir d’applications. Aucun fichier supplémentaire n’est téléchargé.','Después de instalarlo, ExOriX estará disponible en tu cajón de aplicaciones. No se descarga ningún archivo adicional.'],
       ['ExOriX is already installed on this device.','تم تثبيت ExOriX على هذا الجهاز بالفعل.','ExOriX est déjà installé sur cet appareil.','ExOriX ya está instalado en este dispositivo.'],
       ['Select country','اختر الدولة','Sélectionnez un pays','Selecciona un país','Land auswählen','Seleziona un paese','Выберите страну','选择国家','国を選択'],
       ['Search by country name or code','ابحث باسم الدولة أو الرمز','Rechercher par nom ou code du pays','Busca por nombre o código del país','Nach Landname oder Code suchen','Cerca per nome o codice del paese','Ищите по названию или коду страны','按国家名称或代码搜索','国名またはコードで検索'],
@@ -10905,6 +11302,11 @@
   }
   function dashboardGreeting(hour, lang){
     var period = dashboardGreetingPeriod(hour);
+    /* The dashboard greeting is intentionally always shown in English,
+       regardless of the selected interface language. */
+    var englishGreetings = { morning:'Good morning!', afternoon:'Good afternoon!', evening:'Good evening!', night:'Good night!' };
+    return englishGreetings[period] || englishGreetings.morning;
+    /* eslint-disable no-unreachable */
     var greetings = {
       ar: { morning:'صباح الخير', afternoon:'نهارك سعيد', evening:'مساء الخير', night:'ليلة سعيدة' },
       en: { morning:'Good morning!', afternoon:'Good afternoon!', evening:'Good evening!', night:'Good night!' },
@@ -10919,6 +11321,7 @@
       ja: { morning:'おはようございます！', afternoon:'こんにちは！', evening:'こんばんは！', night:'おやすみなさい！' }
     };
     return (greetings[lang] || greetings.en)[period];
+    /* eslint-enable no-unreachable */
   }
   function dashboardGreetingIcon(period){
     var open = '<svg class="crypto-market-svg '+period+'" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
@@ -12022,10 +12425,18 @@
       var profileIcon=profileBadge.querySelector('svg'),profileIconWrap=document.getElementById('set-profile-verification-icon'),profileState=document.getElementById('set-profile-verification-state');
       if(profileIcon)profileIcon.innerHTML=status==='verified'?'<path d="m5 12 4 4L19 6"/>':status==='under_review'?'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>':'<path d="M12 3 5 6v5c0 4.6 2.9 8.5 7 10 4.1-1.5 7-5.4 7-10V6l-7-3Z"/><path d="M12 8v4M12 16h.01"/>';
       if(profileIconWrap)profileIconWrap.style.color=stateColor;
-      if(profileState){profileState.textContent=identityText(labels[6],labels[7]);profileState.style.color=stateColor;profileState.style.background=status==='verified'?'rgba(42,174,135,.16)':status==='under_review'?'rgba(240,185,63,.13)':'rgba(255,255,255,.08)';}
+      if(profileState){profileState.textContent=identityText('Go to view','الانتقال لعرض');profileState.style.color=stateColor;profileState.style.background=status==='verified'?'rgba(42,174,135,.16)':status==='under_review'?'rgba(240,185,63,.13)':'rgba(255,255,255,.08)';}
       var profileLabel=profileBadge.querySelector('.set-profile-verification-copy small');if(profileLabel)profileLabel.textContent=identityText('Identity verification','التحقق من الهوية');
     }
     if(profileText)profileText.textContent=identityText(labels[4],labels[5]);
+  }
+  function shareExOriXProfile(ev){
+    if(ev){ev.preventDefault();ev.stopPropagation();}
+    var shareUrl='https://exorix-71359.onrender.com';
+    var shareData={url:shareUrl};
+    if(navigator.share){navigator.share(shareData).catch(function(){});}
+    else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(shareUrl).catch(function(){});}
+    else{window.open('https://wa.me/?text='+encodeURIComponent(shareUrl),'_blank');}
   }
   function identityRestoreProfile(data){
     if(!data)return;
@@ -12420,8 +12831,29 @@
       modelNote+'</div>'+
       '<div class="set-session-empty"><span class="set-session-empty-icon">✓</span><span class="set-session-empty-copy"><strong>'+uidLocalized('No other active sessions','لا توجد جلسات نشطة أخرى')+'</strong><small>'+uidLocalized('Only this device is currently signed in.','هذا هو الجهاز الوحيد المسجل الدخول حالياً.')+'</small></span></div>'+
       '<div class="set-devices-actions"><button class="set-link-btn" onclick="openSettingsModal(\'devices\')">'+uidLocalized('Update device details','تحديث تفاصيل الجهاز')+'</button></div>';
-  }
-  function openSettingsModal(type){
+   }
+   function copyTelegramContact(){
+     var handle='@exorix_customer_service';
+     var button=document.getElementById('set-telegram-copy');
+     var label=button?button.querySelector('.set-contact-copy-label'):null;
+     function done(){
+       if(label) label.textContent='تم نسخ المعرف';
+       else if(button) button.textContent='تم نسخ المعرف';
+       if(button) button.classList.add('ok');
+       settingsToast('تم نسخ معرف Telegram');
+       setTimeout(function(){if(label) label.textContent='نسخ المعرف';if(button) button.classList.remove('ok');},1800);
+     }
+     function fallback(){
+       var area=document.createElement('textarea');
+       area.value=handle; area.setAttribute('readonly',''); area.style.position='fixed'; area.style.opacity='0';
+       document.body.appendChild(area); area.select();
+       try{document.execCommand('copy');done();}catch(e){settingsToast('تعذّر النسخ — حدده يدوياً');}
+       document.body.removeChild(area);
+     }
+     if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(handle).then(done).catch(fallback);
+     else fallback();
+   }
+   function openSettingsModal(type){
     var modal=document.getElementById('set-modal'), title=document.getElementById('set-modal-title'), body=document.getElementById('set-modal-body');
     var content='';
     if(type==='profile'){ title.textContent='Personal details'; content='<form onsubmit="saveSettingsProfile(event)"><div class="set-field"><label>Full name</label><input id="set-edit-name" required minlength="2" value="'+escapeSettings(APP_SETTINGS.name)+'"></div><div class="set-field"><label>Email address</label><input id="set-edit-email" type="email" value="'+escapeSettings(APP_SETTINGS.email)+'"></div><button class="set-save" type="submit">Save changes</button></form>'; }
@@ -12429,8 +12861,12 @@
     if(type==='password'){ title.textContent='Change password'; content='<form onsubmit="saveSettingsPassword(event)"><div class="set-field"><label>Current password</label><input id="set-current-pass" type="password" minlength="8" required></div><div class="set-field"><label>New password</label><input id="set-new-pass" type="password" minlength="8" required></div><div class="set-field"><label>Confirm new password</label><input id="set-confirm-pass" type="password" minlength="8" required></div><button class="set-save" type="submit">Update password</button></form>'; }
      if(type==='devices'){ title.textContent=uidLocalized('Devices & sessions','الأجهزة والجلسات'); content='<div class="set-device-loading">'+uidLocalized('Reading your real device details…','جارٍ قراءة تفاصيل جهازك الفعلية…')+'</div>'; }
     if(type==='help'){ title.textContent='Security help'; content='<p class="set-help-copy">ExOriX support will never ask for your password, recovery phrase, or one-time code. Review account activity regularly and contact live support if you notice anything unfamiliar.</p><button class="set-save" onclick="closeSettingsModal();showPage(\'page-messages\');setTimeout(function(){openChat(\'security\',\'Review my recent logins\')},100)">Review recent logins</button>'; }
-      if(type==='about'){ title.textContent='About ExOriX'; content='<p class="set-help-copy"><strong style="color:var(--wallet-ink)">ExOriX Wallet</strong><br>Version 12.4.0 (Build 240829)<br><br>Your private financial workspace for managing assets, swaps and secure transfers.</p><button class="set-link-btn" onclick="settingsToast(\'Privacy policy is up to date\')">Privacy policy</button><button class="set-link-btn" onclick="settingsToast(\'Terms of service are up to date\')">Terms of service</button>'; }
-       if(type==='install'){ title.textContent='Install ExOriX'; content='<div class="set-download-hero"><div class="set-download-brand"><span class="set-download-mark" aria-hidden="true"><img src="./exorix-icon-512.png" alt="ExOriX" /></span><span class="set-download-copy"><strong>Install ExOriX</strong><small>Add ExOriX to your device for a faster, secure experience.</small></span></div><div class="set-download-platforms"><span>Android · App drawer</span><span>iPhone · App</span><span>Desktop · App</span></div></div><div class="set-install-state" id="set-install-state" data-state="unavailable"><span class="set-install-state-icon" id="set-install-state-icon" aria-hidden="true">•</span><span class="set-install-state-copy"><strong id="set-install-state-title">Not installed</strong><small id="set-install-state-copy">Real app installation requires secure app setup.</small></span></div><div class="set-download-actions"><button type="button" class="set-download-primary" id="set-install-app" onclick="requestAppInstall()">Install on this device</button></div><p class="set-install-status" id="set-install-status" role="status" aria-live="polite"></p><section class="set-ios-install-guide" id="set-ios-install-guide" hidden></section><p class="set-download-note">After installation, ExOriX will be available from your app drawer. No extra file is downloaded.</p>'; }
+     if(type==='support'){ title.textContent='مركز المساعدة والمحادثة المباشرة'; content='<button class="set-link-btn" type="button" onclick="openSettingsModal(\'contact\')">تواصل معنا</button><button class="set-link-btn" type="button" onclick="closeSettingsModal();showPage(\'page-messages\');setTimeout(function(){openChat(\'support\',\'I need help with my account\')},100)">محادثة مباشرة</button>'; }
+     if(type==='contact'){ title.textContent='تواصل معنا عبر Telegram'; content='<div class="set-contact-panel" dir="rtl"><div class="set-contact-head"><span class="set-contact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m21 3-8.7 17.8-3.2-7.1L2 10.5 21 3Z"/><path d="m9.1 13.7 4.3-4.2"/></svg></span><span class="set-contact-heading"><span class="set-contact-kicker">Customer support</span><strong>تواصل مع فريق الدعم</strong><small>نحن هنا لمساعدتك عبر Telegram بسرعة وأمان.</small></span></div><div class="set-contact-handle-card"><span class="set-contact-handle-copy"><span>معرّف التواصل</span><strong class="set-contact-handle" dir="ltr">@exorix_customer_service</strong></span></div><div class="set-contact-actions"><button class="set-contact-primary" type="button" onclick="window.open(\'https://t.me/exorix_customer_service\',\'_blank\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21 3-8.7 17.8-3.2-7.1L2 10.5 21 3Z"/><path d="m9.1 13.7 4.3-4.2"/></svg><span>فتح Telegram</span></button><button class="set-contact-secondary" id="set-telegram-copy" type="button" onclick="copyTelegramContact()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span class="set-contact-copy-label">نسخ المعرف</span></button></div></div>'; }
+      if(type==='about'){ title.textContent='About ExOriX'; content='<p class="set-help-copy"><strong style="color:var(--wallet-ink)">ExOriX Wallet</strong><br>Version 12.4.0 (Build 240829)<br><br>Your private financial workspace for managing assets, swaps and secure transfers.</p><button class="set-link-btn" onclick="openSettingsModal(\'privacy\')">Privacy policy</button><button class="set-link-btn" onclick="openSettingsModal(\'terms\')">Terms of service</button>'; }
+      if(type==='privacy'){ title.textContent=uidLocalized('Privacy Policy','سياسة الخصوصية'); content='<div class="set-privacy-head"><h2 class="set-privacy-title">سياسة الخصوصية – ExOriX</h2><span class="set-privacy-date">تاريخ التحديث: سبتمبر 2026</span></div><div class="set-privacy-card"><h4><span class="set-privacy-icon">&#128187;</span>البيانات المجمعة</h4><p>نجمع بيانات التسجيل الأساسية (الاسم، البريد الإلكتروني، وبيانات التحقق)، إضافة إلى البيانات التقنية وسجلات الأنشطة لضمان استقرار الخدمة وأمان المعاملات.</p></div><div class="set-privacy-card"><h4><span class="set-privacy-icon">&#128273;</span>استخدام البيانات</h4><p>تُستخدم بياناتك حصراً لتشغيل حسابك، تنفيذ العمليات، وتأمين المنصة ضد الاحتيال.</p></div><div class="set-privacy-card"><h4><span class="set-privacy-icon">&#128272;</span>السرية والأمان</h4><p>نطبق تشفيراً عالياً لحماية بياناتك. لا نبيع أو نشارك معلوماتك الشخصية مع أي طرف ثالث لأغراض تسويقية.</p></div><p class="set-help-copy" style="margin-top:14px; text-align:center;">نولي في ExOriX أقصى أهمية لخصوصية بياناتك وأمنك الرقمي.</p>'; }
+      if(type==='terms'){ title.textContent=uidLocalized('Terms of Service','شروط الخدمة'); content='<div class="set-privacy-head"><h2 class="set-privacy-title">شروط الخدمة – ExOriX</h2><span class="set-privacy-date">تاريخ التحديث: سبتمبر 2026</span></div><div class="set-privacy-card"><h4><span class="set-privacy-icon">&#128221;</span>قبول الشروط</h4><p>باستخدامك لمنصة ExOriX، فإنك توافق على الالتزام بهذه الشروط بما فيها جميع القواعد والسياسات المرتبطة بالخدمة. يُرجى قراءة الشروط بعناية قبل البدء.</p></div><div class="set-privacy-card"><h4><span class="set-privacy-icon">&#128100;</span>التزامات المستخدم</h4><p>تلتزم بتقديم معلومات دقيقة أثناء التسجيل، والحفاظ على سرية بيانات الدخول، وعدم مشاركتها مع أي طرف آخر. أنت المسؤول عن كل نشاط يتم عبر حسابك.</p></div><div class="set-privacy-card"><h4><span class="set-privacy-icon">&#9940;</span>الاستخدامات المحظورة</h4><p>يُحظر استخدام المنصة لأغراض غير قانونية أو احتيالية أو تؤدي إلى الإضرار بالنظام أو المستخدمين الآخرين. نحتفظ بحق تعليق أو إنهاء الحسابات المخالفة.</p></div><div class="set-privacy-card"><h4><span class="set-privacy-icon">&#128736;</span>المسؤولية والتعديلات</h4><p>ExOriX غير مسؤولة عن خسائر ناتجة عن استخدام غير مصرح به لحسابك. قد نقوم بتحديث هذه الشروط من حين لآخر، وسيُعلن عن أي تغيير جوهري عبر التطبيق.</p></div><p class="set-help-copy" style="margin-top:14px; text-align:center;">للاستفسارات القانونية، يُرجى التواصل مع فريق الدعم عبر مركز المساعدة.</p>'; }
+       if(type==='install'){ title.textContent='Install ExOriX'; content='<div class="set-download-hero"><div class="set-download-brand"><span class="set-download-mark" aria-hidden="true"><img src="./exorix-icon-512.png" alt="ExOriX" /></span><span class="set-download-copy"><strong>Install ExOriX</strong><small>Add ExOriX to your device for a faster, secure experience.</small></span></div><div class="set-download-platforms"><span>Android · Google Chrome</span><span>iPhone · Safari</span><span>Windows · Google Chrome</span><span>macOS · Safari</span></div></div><div class="set-install-state" id="set-install-state" data-state="unavailable"><span class="set-install-state-icon" id="set-install-state-icon" aria-hidden="true">•</span><span class="set-install-state-copy"><strong id="set-install-state-title">Not installed</strong><small id="set-install-state-copy">Real app installation requires secure app setup.</small></span></div><div class="set-download-actions"><button type="button" class="set-download-primary" id="set-install-app" onclick="requestAppInstall()">Install on this device</button></div><p class="set-install-status" id="set-install-status" role="status" aria-live="polite"></p><section class="set-ios-install-guide" id="set-ios-install-guide" hidden></section>'; }
        body.innerHTML=content; body.setAttribute('data-settings-type',type); modal.classList.toggle('devices-fullscreen',type==='devices'); modal.classList.add('open'); document.body.style.overflow='hidden';
        if(type==='devices'){ collectDeviceDetails(renderDeviceSession); }
       if(type==='preferences'){document.getElementById('set-edit-language').value=normalizeLanguage(APP_SETTINGS.language);document.getElementById('set-edit-currency').value=APP_SETTINGS.currency;renderLanguageChooser();applyLanguage();}
@@ -12466,8 +12902,8 @@
       if(appIsIOS()){guide.hidden=true;return;}
       guide.hidden=false;
       guide.innerHTML=appInstallText(
-        '<div class="set-ios-guide-heading"><span class="set-ios-guide-icon">↓</span><span><strong>Android installation</strong><small>If the install dialog does not open automatically.</small></span></div><ol class="set-ios-guide-steps"><li>Open this page in Chrome over HTTPS.</li><li>Tap Chrome’s ⋮ menu.</li><li>Choose “Install app” or “Add to Home screen”.</li><li>Confirm “Install” or “Add”.</li></ol><p class="set-ios-guide-tip">The browser menu is controlled by Android. The button above opens the native prompt whenever Chrome makes it available.</p>',
-        '<div class="set-ios-guide-heading"><span class="set-ios-guide-icon">↓</span><span><strong>تثبيت Android</strong><small>إذا لم تظهر نافذة التثبيت تلقائياً.</small></span></div><ol class="set-ios-guide-steps"><li>افتح الصفحة في Chrome عبر اتصال HTTPS.</li><li>اضغط قائمة Chrome ⋮.</li><li>اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».</li><li>أكد اختيار «تثبيت» أو «إضافة».</li></ol><p class="set-ios-guide-tip">قائمة المتصفح يتحكم بها Android. الزر أعلاه يفتح نافذة التثبيت الأصلية عندما يتيحها Chrome.</p>'
+        '<div class="set-ios-guide-heading"><span class="set-ios-guide-icon">↓</span><span><strong>Android installation</strong><small>If the install dialog does not open automatically.</small></span></div><ol class="set-ios-guide-steps"><li>Open this page in Google Chrome over HTTPS.</li><li>Tap Chrome’s ⋮ menu.</li><li>Choose “Install app” or “Add to Home screen”.</li><li>Confirm “Install” or “Add”.</li></ol><p class="set-ios-guide-tip">This is Google Chrome’s native install menu. Chrome decides when it is available; the button above opens the native prompt when supported.</p>',
+        '<div class="set-ios-guide-heading"><span class="set-ios-guide-icon">↓</span><span><strong>تثبيت Android</strong><small>إذا لم تظهر نافذة التثبيت تلقائياً.</small></span></div><ol class="set-ios-guide-steps"><li>افتح الصفحة في متصفح Google Chrome عبر اتصال HTTPS.</li><li>اضغط قائمة Chrome ⋮.</li><li>اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».</li><li>أكد اختيار «تثبيت» أو «إضافة».</li></ol><p class="set-ios-guide-tip">هذه هي قائمة التثبيت الأصلية في Google Chrome. يحدد Chrome وقت ظهورها، والزر أعلاه يفتح نافذة التثبيت الأصلية عند دعمها.</p>'
       );
     }
     function updateAppInstallUI(){
@@ -13172,11 +13608,39 @@
     return "Pending";
   }
 
+  /*
+   * Wallet history is reserved for real blockchain deposit confirmations.
+   * Sync-code profits and referral commissions use the same server endpoint
+   * for persistence, but they are internal credits and must stay out of the
+   * wallet deposit list and its "latest deposit" status card.
+   */
+  function isInternalWalletCredit(record) {
+    if (!record || typeof record !== "object") return true;
+    var type = String(record.type || record.depositType || record.category || record.kind || "").toLowerCase();
+    var network = String(record.network || "").toLowerCase();
+    var txid = String(record.txid || record.reference || "").toLowerCase();
+    var note = String(record.note || record.description || "").toLowerCase();
+    var code = String(record.code || "").toLowerCase();
+    var identity = [type, network, txid, note, code].join(" ");
+
+    var isReferral = /referral|commission|عمولة|فريق/.test(identity) ||
+      /^refcom[-_]/i.test(txid) || /^referral\b/i.test(network);
+    var isSync = /sync[\s_-]*code|exchange[\s_-]*sync|مزامن|كود المزامنة/.test(identity) ||
+      /^sync[-_]/i.test(txid) || /^sync[-_]/i.test(network);
+    return isReferral || isSync;
+  }
+
+  function walletDepositRecords(list) {
+    return (Array.isArray(list) ? list : []).filter(function (record) {
+      return !isInternalWalletCredit(record);
+    });
+  }
+
   /* ---------- UI refresh ---------- */
   function renderDeposits(list) {
     if (!Array.isArray(list) || typeof WALLET_DEPOSIT_HISTORY === "undefined") return;
     var net = (typeof WALLET_NETWORKS !== "undefined" && WALLET_NETWORKS[typeof WALLET_NET !== "undefined" ? WALLET_NET : "trc20"]) || null;
-    var sorted = list.slice().sort(function (a, b) { return (b.sortKey || 0) - (a.sortKey || 0); });
+    var sorted = walletDepositRecords(list).slice().sort(function (a, b) { return (b.sortKey || 0) - (a.sortKey || 0); });
     WALLET_DEPOSIT_HISTORY.length = 0;
     sorted.forEach(function (d) {
       WALLET_DEPOSIT_HISTORY.push({
@@ -13234,7 +13698,7 @@
   function renderDepositStatus() {
     var success = document.getElementById("w-deposit-success");
     var meta = document.getElementById("w-deposit-success-meta");
-    var list = (currentUser && currentUser.deposits) || [];
+    var list = walletDepositRecords(currentUser && currentUser.deposits);
     if (!list.length) { if (success) success.hidden = true; return; }
     var last = list[0];
     var label = statusLabel(last.statusCode, last.status);
@@ -13342,6 +13806,23 @@
       if (terms && !terms.checked) { msg("signup-alert", "الرجاء الموافقة على الشروط والسياسة."); return; }
 
       var username = fullName.replace(/\s+/g, "_");
+      invite = invite.toUpperCase();
+      /* Referral code must belong to a real account before the team link is made. */
+      if (invite) {
+        if (!/^[A-Za-z0-9-]{4,20}$/.test(invite)) { msg("signup-alert", "رمز الدعوة غير صالح."); return; }
+        msg("signup-alert", "جاري التحقق من رمز الدعوة…", true);
+        try {
+          var refData = await apiGet({ action: "resolveRef", ref: invite, referralCode: invite, code: invite });
+          var refOwner = refData && (refData.username || refData.referrer || refData.owner || refData.name);
+          if (refData && (refData.valid === false || refData.exists === false)) { msg("signup-alert", "رمز الدعوة غير موجود."); return; }
+          if (refOwner) { window.EXORIX_PENDING_REFERRER = refOwner; }
+        } catch (refErr) {
+          var reason = String((refErr && refErr.message) || "");
+          /* Only refuse when the sheet says the code is unknown; network or
+             unsupported-action errors must not block a real signup. */
+          if (/not found|unknown|invalid|غير موجود|غير صالح/i.test(reason)) { msg("signup-alert", "رمز الدعوة غير موجود."); return; }
+        }
+      }
       msg("signup-alert", "جاري إنشاء الحساب…", true);
       try {
         var data = await apiPost({
@@ -13351,7 +13832,9 @@
           email: email,
           password: password,
           ref: invite,
-          referralCode: invite
+          referralCode: invite,
+          inviteCode: invite,
+          referrer: window.EXORIX_PENDING_REFERRER || invite
         });
         setUser({
           username: data.username || username,
@@ -13360,9 +13843,33 @@
           accountStatus: data.accountStatus,
           referralCode: data.referralCode,
           referralLink: data.referralLink,
+          referredBy: data.referredBy || window.EXORIX_PENDING_REFERRER || invite || "",
           deposits: []
         });
-        msg("signup-alert", data.message || "تم إنشاء الحساب بنجاح، يمكنك تسجيل الدخول الآن.", true);
+        var successText = data.message || "تم إنشاء الحساب بنجاح، يمكنك تسجيل الدخول الآن.";
+        if (invite) {
+          var linked = data.referredBy || data.referrer || window.EXORIX_PENDING_REFERRER || "";
+          try {
+            var check = await apiGet({ action: "getProfile", username: data.username || username });
+            if (check && (check.referredBy || check.referrer)) linked = check.referredBy || check.referrer;
+          } catch (checkErr) {}
+          successText += linked
+            ? " تمت إضافتك إلى فريق " + linked + "."
+            : " تم تطبيق رمز الدعوة " + invite + ".";
+        }
+        window.EXORIX_PENDING_REFERRER = null;
+        msg("signup-alert", successText, true);
+        /* انقل البريد وكلمة المرور المستخدَمين في إنشاء الحساب إلى نموذج تسجيل الدخول */
+        try {
+          var le = document.getElementById("login-email");
+          var lp = document.getElementById("login-password");
+          if (le) { le.value = email; le.dispatchEvent(new Event("input", { bubbles: true })); }
+          if (lp) { lp.value = password; lp.dispatchEvent(new Event("input", { bubbles: true })); }
+          if (typeof setFieldState === "function") {
+            setFieldState("login-field-email", true);
+            setFieldState("login-field-pass", true);
+          }
+        } catch (prefillErr) { console.error("Login prefill failed:", prefillErr); }
         setTimeout(function () { if (typeof showPage === "function") showPage("page-login"); }, 1000);
       } catch (err) {
         msg("signup-alert", err.message || "تعذر إنشاء الحساب.");
@@ -13597,6 +14104,587 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
+})();
+</script>
+<!-- ================= TEAM & REFERRAL ================= -->
+<script>
+(function () {
+  "use strict";
+
+  function user() { return window.currentUser || null; }
+
+  /* Stable, unique code per account: the sheet code when available,
+     otherwise a deterministic code derived from the username. */
+  function fallbackCode(name) {
+    var base = String(name || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    var hash = 0, i;
+    for (i = 0; i < String(name || "").length; i++) {
+      hash = (hash * 31 + String(name).charCodeAt(i)) >>> 0;
+    }
+    return "EX" + (base.slice(0, 4) || "USER") + hash.toString(36).toUpperCase().slice(0, 4);
+  }
+
+  function referralCode() {
+    var u = user();
+    if (!u) return "";
+    if (u.referralCode) return String(u.referralCode).toUpperCase();
+    return fallbackCode(u.username || u.email || "");
+  }
+  window.exorixReferralCode = referralCode;
+
+  function referralLink() {
+    return "https://exorix-71359.onrender.com";
+  }
+  window.exorixReferralLink = referralLink;
+
+  function money(value) {
+    var n = Number(value);
+    if (!isFinite(n)) n = 0;
+    return "$" + n.toFixed(2);
+  }
+
+  /* Team cache: a member that already appeared once must never vanish from the
+     list because of a slow/partial server response. */
+  function teamCacheKey() {
+    var u = user() || {};
+    return "exorix_team_cache_" + String(u.username || referralCode() || "guest").trim().toLowerCase();
+  }
+  function memberKey(m) {
+    return String((m && (m.username || m.name || m.email || m.id)) || "").trim().toLowerCase();
+  }
+  function readTeamCache() {
+    try {
+      var raw = localStorage.getItem(teamCacheKey());
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function writeTeamCache(list) {
+    try { localStorage.setItem(teamCacheKey(), JSON.stringify(list || [])); } catch (e) {}
+  }
+  function mergeTeamMembers(fresh) {
+    var cached = readTeamCache();
+    var out = [], seen = {};
+    (Array.isArray(fresh) ? fresh : []).forEach(function (m) {
+      var k = memberKey(m);
+      if (!k || seen[k]) return;
+      seen[k] = true; out.push(m);
+    });
+    cached.forEach(function (m) {
+      var k = memberKey(m);
+      if (!k || seen[k]) return;
+      seen[k] = true; out.push(m);
+    });
+    writeTeamCache(out);
+    return out;
+  }
+
+  function initials(name) {
+    var text = String(name || "?").trim();
+    return (text.slice(0, 2) || "?").toUpperCase();
+  }
+
+  function renderMembers(members) {
+    var list = document.getElementById("team-list");
+    var status = document.getElementById("team-status");
+    if (!list) return;
+    list.innerHTML = "";
+    if (!members.length) {
+      if (status) { status.style.display = "block"; status.textContent = "لا يوجد أعضاء بعد — شارك رمز الدعوة لبناء فريقك."; }
+      var empty = document.createElement("div");
+      empty.className = "team-empty";
+      empty.textContent = "فريقك فارغ حالياً.";
+      list.appendChild(empty);
+      return;
+    }
+    if (status) { status.textContent = ""; status.style.display = "none"; }
+    members.forEach(function (m) {
+      var name = m.username || m.name || m.email || "عضو";
+      var row = document.createElement("div");
+      row.className = "team-member";
+      var avatar = document.createElement("span");
+      avatar.className = "team-avatar";
+      avatar.textContent = initials(name);
+      var copy = document.createElement("span");
+      copy.className = "team-member-copy";
+      var strong = document.createElement("strong");
+      strong.textContent = name;
+      var small = document.createElement("small");
+      var joined = m.joinedAt || m.createdAt || m.date || "";
+      var level = m.level ? ("المستوى " + m.level) : "المستوى 1";
+      small.textContent = joined ? (level + " · انضم " + joined) : level;
+      copy.appendChild(strong); copy.appendChild(small);
+      var value = document.createElement("span");
+      value.className = "team-member-value";
+      value.textContent = money(m.earnings || m.commission || m.teamEarnings || 0);
+      value.style.display = "none";
+      row.appendChild(avatar); row.appendChild(copy); row.appendChild(value);
+      list.appendChild(row);
+    });
+  }
+
+  function renderTeam(data) {
+    var u = user() || {};
+    var members = [];
+    if (data) {
+      if (Array.isArray(data.team)) members = data.team;
+      else if (Array.isArray(data.members)) members = data.members;
+      else if (Array.isArray(data.referrals)) members = data.referrals;
+      else if (Array.isArray(data)) members = data;
+    }
+    members = mergeTeamMembers(members);
+    var count = data && data.teamCount != null ? Number(data.teamCount) : members.length;
+    if (!isFinite(count)) count = members.length;
+    if (count < members.length) count = members.length;
+    var earnings = data && data.teamEarnings != null ? data.teamEarnings : u.teamEarnings;
+    var active = members.filter(function (m) {
+      var st = String(m.status || m.accountStatus || "").toLowerCase();
+      return Number(m.deposits || m.totalDeposit || 0) > 0 || /active|نشط|verified/.test(st);
+    }).length;
+
+    var codeEl = document.getElementById("team-code");
+    if (codeEl) codeEl.textContent = referralCode() || "——";
+    var linkEl = document.getElementById("team-link");
+    if (linkEl) linkEl.textContent = referralLink();
+    var byEl = document.getElementById("team-referred-by");
+    if (byEl) {
+      var by = (data && (data.referredBy || data.upline || data.sponsor)) || u.referredBy || "";
+      byEl.textContent = by ? ("انضممت عبر دعوة: " + by) : "";
+    }
+    var countEl = document.getElementById("team-count");
+    if (countEl) countEl.textContent = String(count || 0);
+    var activeEl = document.getElementById("team-active");
+    if (activeEl) activeEl.textContent = String(active || 0);
+    var earnEl = document.getElementById("team-earnings");
+    if (earnEl) earnEl.textContent = money(earnings);
+    renderMembers(members);
+    /* Re-apply the cumulative referral total after every team refresh.
+       The team API may return a partial snapshot, so it must not overwrite
+       a commission value that was already resolved locally. */
+    if (typeof window.renderReferralEarnings === "function") {
+      try { window.renderReferralEarnings(data); } catch (e) {}
+    }
+  }
+
+  async function loadTeam() {
+    var u = user();
+    var status = document.getElementById("team-status");
+    if (!u || !u.username) {
+      if (status) status.textContent = "يجب تسجيل الدخول لعرض الفريق.";
+      return;
+    }
+    if (status) status.textContent = "جاري تحميل بيانات الفريق…";
+    renderTeam(null);
+    try {
+      if (typeof window.syncProfile === "function") { try { await window.syncProfile(); } catch (e) {} }
+      var data = await window.apiGet({ action: "getTeam", username: u.username, user: u.username, owner: u.username, referralCode: referralCode(), code: referralCode(), cacheBust: Date.now() });
+      renderTeam(data);
+    } catch (err) {
+      renderTeam(null);
+      if (status) status.textContent = err && err.message ? err.message : "تعذر تحميل بيانات الفريق.";
+    }
+  }
+  window.loadTeamPage = loadTeam;
+
+  var teamRefreshBusy = false;
+  async function refreshVisibleTeam() {
+    var page = document.getElementById("page-team");
+    if (!page || !page.classList.contains("active") || teamRefreshBusy) return;
+    teamRefreshBusy = true;
+    try { await loadTeam(); } finally { teamRefreshBusy = false; }
+  }
+  setInterval(refreshVisibleTeam, 5000);
+  window.addEventListener("online", refreshVisibleTeam);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) refreshVisibleTeam();
+  });
+
+  window.openTeamPage = function (ev) {
+    if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+    if (typeof window.showPage === "function") window.showPage("page-team");
+    loadTeam();
+  };
+
+  function notify(text) {
+    if (typeof window.walletToast === "function") { try { window.walletToast(text); return; } catch (e) {} }
+  }
+
+  /* Clipboard API is blocked in insecure/iframed contexts, so always keep a
+     textarea + execCommand fallback and confirm on screen either way. */
+  function legacyCopy(text) {
+    try {
+      var area = document.createElement("textarea");
+      area.value = text;
+      area.setAttribute("readonly", "readonly");
+      area.style.position = "fixed";
+      area.style.top = "-1000px";
+      area.style.opacity = "0";
+      document.body.appendChild(area);
+      area.focus();
+      area.select();
+      area.setSelectionRange(0, text.length);
+      var done = document.execCommand("copy");
+      document.body.removeChild(area);
+      return !!done;
+    } catch (e) { return false; }
+  }
+
+  function copyText(text, okMessage) {
+    if (!text) return;
+    var finish = function (ok) {
+      if (ok) { notify(okMessage); flashCopied(okMessage); }
+      else { notify("تعذر النسخ تلقائياً — انسخ الرمز يدوياً"); selectCodeText(); }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext !== false) {
+      navigator.clipboard.writeText(text).then(function () { finish(true); }).catch(function () { finish(legacyCopy(text)); });
+      return;
+    }
+    finish(legacyCopy(text));
+  }
+
+  function selectCodeText() {
+    var el = document.getElementById("team-code");
+    if (!el) return;
+    try {
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) {}
+  }
+
+  function flashCopied(message) {
+    var status = document.getElementById("team-copy-status");
+    if (!status) return;
+    status.textContent = message;
+    status.style.opacity = "1";
+    clearTimeout(flashCopied.timer);
+    flashCopied.timer = setTimeout(function () { status.style.opacity = "0"; }, 2200);
+  }
+
+  window.copyTeamInvite = function () {
+    copyText(referralCode(), "تم نسخ رمز الدعوة");
+  };
+
+  window.copyTeamLink = function () {
+    copyText(referralLink(), "تم نسخ رابط الدعوة");
+  };
+
+  window.shareTeamInvite = function () {
+    var link = referralLink();
+    if (!link) return;
+    copyText(link, "تم نسخ رابط الدعوة");
+  };
+
+  /* Invite links (?ref=CODE) prefill the signup field so the team link is kept. */
+  function prefillInvite() {
+    var ref = "";
+    try { ref = new URLSearchParams(location.search).get("ref") || ""; } catch (e) {}
+    var field = document.getElementById("su-invite");
+    if (!field) return;
+    /* الحقل يبقى قابلاً للتعديل أو المسح بالكامل من قبل المستخدم */
+    if (!field.dataset.inviteTouched) {
+      field.addEventListener("input", function () { field.dataset.inviteTouched = "1"; });
+    }
+    if (!ref) return;
+    var def = field.getAttribute("data-default-invite") || "";
+    if (!field.dataset.inviteTouched && (!field.value || field.value.toUpperCase() === def.toUpperCase())) {
+      field.value = ref.toUpperCase();
+    }
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", prefillInvite);
+  else prefillInvite();
+})();
+</script>
+<!-- ================= REFERRAL COMMISSION 10% (auto, cumulative, on approved sync codes) ================= -->
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     Referral commission engine.
+     Rule: every profit generated by a member (approved sync code)
+     pays 10% (0.10) of that profit to the member who invited him.
+     It is cumulative: every new profit of the member adds a new 10%
+     commission on top of what the inviter already earned.
+     The commission is recorded on the inviter's account through the
+     same server API used by deposits, so it is real and persistent.
+     Nothing is credited locally without a server record.
+     ============================================================ */
+
+  var RATE = 0.10;
+  var PAID_KEY = 'exorix_ref_commission_v1';
+  var SYNC_PENDING_KEY = 'exorix_sync_pending_v2';
+  var UPLINE_KEY = 'exorix_upline_cache_v1';
+  var WATCH_MS = 15000;
+  var busy = false;
+
+  window.EXORIX_REFERRAL_RATE = RATE;
+
+  function me() { return window.currentUser || null; }
+
+  function readJSON(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      var parsed = JSON.parse(raw);
+      return parsed == null ? fallback : parsed;
+    } catch (e) { return fallback; }
+  }
+
+  function writeJSON(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+
+  function paidLog() {
+    var list = readJSON(PAID_KEY, []);
+    return Array.isArray(list) ? list : [];
+  }
+
+  function savePaid(list) { writeJSON(PAID_KEY, (list || []).slice(0, 200)); }
+
+  function round2(n) {
+    var v = Number(n);
+    if (!isFinite(v)) return 0;
+    return Math.round(v * 100) / 100;
+  }
+
+  function referralEarningsCacheKey() {
+    var u = me() || {};
+    var identity = String(u.username || u.email || 'guest').trim().toLowerCase();
+    return 'exorix_referral_earnings_cache_v1_' + identity.replace(/[^a-z0-9._-]/g, '_');
+  }
+
+  function commissionOf(profit) { return round2(Number(profit || 0) * RATE); }
+  window.exorixReferralCommission = commissionOf;
+
+  /* --- who invited me: username or invite code, resolved once and cached --- */
+  function rawUpline() {
+    var u = me() || {};
+    var by = u.referredBy || u.referrer || u.upline || u.sponsor || window.EXORIX_PENDING_REFERRER || '';
+    return String(by || '').trim();
+  }
+
+  function uplineCache() {
+    var cache = readJSON(UPLINE_KEY, {});
+    return (cache && typeof cache === 'object') ? cache : {};
+  }
+
+  async function resolveUpline() {
+    var raw = rawUpline();
+    if (!raw) return '';
+    var cache = uplineCache();
+    var key = raw.toUpperCase();
+    if (cache[key]) return cache[key];
+    if (typeof window.apiGet === 'function') {
+      try {
+        var data = await window.apiGet({ action: 'resolveRef', ref: raw, referralCode: raw, code: raw });
+        var name = data && (data.username || data.referrer || data.owner || data.user);
+        if (name) {
+          cache[key] = String(name);
+          writeJSON(UPLINE_KEY, cache);
+          return String(name);
+        }
+      } catch (e) {}
+    }
+    /* Fall back to the stored value itself — many accounts store the
+       inviter's username directly instead of his code. */
+    cache[key] = raw;
+    writeJSON(UPLINE_KEY, cache);
+    return raw;
+  }
+
+  function alreadyPaid(ref) {
+    return paidLog().some(function (item) { return item && item.sourceRef === ref; });
+  }
+
+  function markPaid(entry) {
+    var list = paidLog();
+    list.unshift(entry);
+    savePaid(list);
+    try { if (typeof window.renderReferralEarnings === 'function') window.renderReferralEarnings(); } catch (e) {}
+  }
+
+  /* --- send one commission to the inviter --- */
+  async function payCommission(item) {
+    var u = me();
+    if (!u || !u.username) return;
+    if (!item || !item.ref || alreadyPaid(item.ref)) return;
+
+    var profit = Number(item.profit || 0);
+    var amount = commissionOf(profit);
+    if (!isFinite(amount) || amount <= 0) return;
+
+    var inviter = await resolveUpline();
+    if (!inviter) return;
+    if (String(inviter).toLowerCase() === String(u.username).toLowerCase()) return;
+
+    if (typeof window.apiPost !== 'function') return;
+
+    var ref = 'REFCOM-' + String(item.ref).replace(/[^A-Za-z0-9-]/g, '');
+    try {
+      await window.apiPost({
+        action: 'createDeposit',
+        username: inviter,
+        txid: ref,
+        amount: amount,
+        network: 'REFERRAL',
+        note: 'Referral commission 10% from ' + u.username + ' (sync code ' + (item.code || '') + ')',
+        code: item.code || '',
+        type: 'referral_commission',
+        rate: RATE,
+        sourceProfit: round2(profit),
+        fromUser: u.username,
+        referralCode: String(rawUpline() || '').toUpperCase()
+      });
+      markPaid({
+        sourceRef: item.ref,
+        ref: ref,
+        inviter: inviter,
+        fromUser: u.username,
+        code: item.code || '',
+        profit: round2(profit),
+        rate: RATE,
+        amount: amount,
+        createdAt: Date.now(),
+        status: 'sent'
+      });
+    } catch (e) {
+      /* Not recorded on the server → keep it unpaid so the next pass retries. */
+    }
+  }
+
+  /* --- scan approved sync codes and pay any missing commission --- */
+  async function scanApproved() {
+    if (busy) return;
+    var u = me();
+    if (!u || !u.username) return;
+    var pending = readJSON(SYNC_PENDING_KEY, []);
+    if (!Array.isArray(pending) || !pending.length) return;
+    var approved = pending.filter(function (item) {
+      return item && item.status === 'approved' && Number(item.profit) > 0 && !alreadyPaid(item.ref);
+    });
+    if (!approved.length) return;
+    busy = true;
+    try {
+      for (var i = 0; i < approved.length; i++) {
+        await payCommission(approved[i]);
+      }
+    } finally { busy = false; }
+  }
+  window.exorixScanReferralCommissions = scanApproved;
+
+  /* Run right after every settlement pass so an approval pays instantly. */
+  function hookSettlement() {
+    var native = window.syncCheckPendingCodes;
+    if (typeof native !== 'function' || native.__refWrapped) return false;
+    var wrapped = function () {
+      var out;
+      try { out = native.apply(this, arguments); } catch (e) { out = null; }
+      return Promise.resolve(out).then(function (value) {
+        return scanApproved().then(function () { return value; });
+      }).catch(function () { return scanApproved(); });
+    };
+    wrapped.__refWrapped = true;
+    window.syncCheckPendingCodes = wrapped;
+    return true;
+  }
+
+  var hookTries = 0;
+  var hookTimer = setInterval(function () {
+    hookTries++;
+    if (hookSettlement() || hookTries > 40) clearInterval(hookTimer);
+  }, 500);
+  hookSettlement();
+
+  /* --- my referral earnings, shown on the team page --- */
+  function myCommissionsReceived(teamData) {
+    var u = me() || {};
+    var fromServer = 0;
+    var deposits = (u && Array.isArray(u.deposits)) ? u.deposits : [];
+    deposits.forEach(function (d) {
+      var kind = String((d && (d.type || d.network || d.note)) || '').toLowerCase();
+      var txid = String((d && d.txid) || '');
+      var status = String((d && (d.statusCode || d.status)) || '').toLowerCase();
+      var isRef = /referral/.test(kind) || /^REFCOM-/i.test(txid);
+      var ok = /complete|approved|credited|success|مكتمل|تمت|مقبول|موافق/.test(status);
+      if (isRef && ok) fromServer += Number(d.amount || 0) || 0;
+    });
+    var teamValue = teamData && teamData.teamEarnings != null ? teamData.teamEarnings : u.teamEarnings;
+    var fromTeam = Number(teamValue);
+    if (!isFinite(fromTeam) || fromTeam < 0) fromTeam = 0;
+    var remembered = Number(readJSON(referralEarningsCacheKey(), 0));
+    if (!isFinite(remembered) || remembered < 0) remembered = 0;
+    return round2(Math.max(fromServer, fromTeam, remembered));
+  }
+
+  window.renderReferralEarnings = function (teamData) {
+    var earnEl = document.getElementById('team-earnings');
+    if (!earnEl) return;
+    var total = myCommissionsReceived(teamData);
+    var cacheKey = referralEarningsCacheKey();
+    var remembered = Number(readJSON(cacheKey, 0));
+    if (!isFinite(remembered) || remembered < 0) remembered = 0;
+    if (total < remembered) total = remembered;
+    if (total > remembered) writeJSON(cacheKey, round2(total));
+    earnEl.textContent = '$' + total.toFixed(2);
+    var host = document.getElementById('team-referred-by');
+    if (host && host.parentNode) {
+      var note = document.getElementById('team-rate-note');
+      if (!note) {
+        note = document.createElement('p');
+        note.id = 'team-rate-note';
+        note.className = 'hint';
+        host.parentNode.insertBefore(note, host.nextSibling);
+      }
+      note.textContent = '';
+      note.style.display = 'none';
+    }
+  };
+
+  /* Keep the team page numbers in sync with the commission engine. */
+  function hookTeamPage() {
+    var native = window.loadTeamPage;
+    if (typeof native !== 'function' || native.__refWrapped) return false;
+    var wrapped = function () {
+      var out;
+      try { out = native.apply(this, arguments); } catch (e) { out = null; }
+      return Promise.resolve(out).then(function (value) {
+        try { window.renderReferralEarnings(); } catch (e) {}
+        try { scanApproved(); } catch (e) {}
+        return value;
+      }).catch(function () {});
+    };
+    wrapped.__refWrapped = true;
+    window.loadTeamPage = wrapped;
+    var openNative = window.openTeamPage;
+    if (typeof openNative === 'function' && !openNative.__refWrapped) {
+      var openWrapped = function (ev) {
+        if (ev) { try { ev.preventDefault(); ev.stopPropagation(); } catch (e) {} }
+        if (typeof window.showPage === 'function') window.showPage('page-team');
+        try { window.loadTeamPage(); } catch (e) {}
+      };
+      openWrapped.__refWrapped = true;
+      window.openTeamPage = openWrapped;
+    }
+    return true;
+  }
+
+  var teamTries = 0;
+  var teamTimer = setInterval(function () {
+    teamTries++;
+    if (hookTeamPage() || teamTries > 40) clearInterval(teamTimer);
+  }, 500);
+  hookTeamPage();
+
+  /* Periodic safety net: retry anything that failed to reach the server. */
+  setInterval(function () { scanApproved(); }, WATCH_MS);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) scanApproved();
+  });
+  setTimeout(function () { scanApproved(); }, 4000);
 })();
 </script>
 </body>
