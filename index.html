@@ -3185,6 +3185,13 @@
   .m-card-msg .m-kv:first-of-type { border-top: none; }
   .m-card-msg .m-kv span { color: var(--m-text-2); }
   .m-card-msg .m-kv b { font-weight: 700; }
+  .m-inline-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+  .m-inline-action {
+    flex: 1 1 auto; min-height: 34px; padding: 7px 10px; border-radius: 10px;
+    color: #fff; background: var(--gradient-action); border: 1px solid rgba(180,140,255,.45);
+    font-family: inherit; font-size: 11px; font-weight: 800;
+  }
+  .m-inline-action:active { transform: scale(.97); }
 
   .m-typing { align-self: flex-start; display: none; align-items: center; gap: 5px; background: var(--m-surface-2); border: 1px solid var(--m-line); border-radius: 16px; border-bottom-left-radius: 6px; padding: 12px 14px; }
   .m-typing.on { display: flex; }
@@ -10234,7 +10241,14 @@
         return;
       }
       var messageText = m.textAr && messageReplyLanguage('') === 'ar' ? m.textAr : m.text;
-      html += '<div class="m-bubble ' + (m.from === 'me' ? 'me' : 'them') + '">' + msgEscape(messageText) +
+      var actionMarkup = '';
+      if (m.actions && m.actions.length && m.from !== 'me') {
+        actionMarkup = '<div class="m-inline-actions">' + m.actions.map(function (action) {
+          var label = messageReplyLanguage('') === 'ar' && action.labelAr ? action.labelAr : action.label;
+          return '<button type="button" class="m-inline-action" onclick="messageAction(\'' + msgEscape(action.key) + '\')">' + msgEscape(label) + '</button>';
+        }).join('') + '</div>';
+      }
+      html += '<div class="m-bubble ' + (m.from === 'me' ? 'me' : 'them') + '">' + msgEscape(messageText) + actionMarkup +
         '<span class="m-meta">' + msgEscape(m.time) +
         (m.from === 'me' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg>' : '') +
         '</span></div>';
@@ -10387,6 +10401,16 @@
     sendMessage();
   }
 
+   function messageAction(action) {
+     if (action === 'help-center') {
+       openSettingsModal('support');
+       return;
+     }
+     if (action === 'contact-support') {
+       openSettingsModal('contact');
+     }
+   }
+
   function updateMsgComposer() {
     var input = document.getElementById('m-input');
     var send = document.getElementById('m-send');
@@ -10479,6 +10503,11 @@
     var has = function (pattern) { return pattern.test(q); };
     var reply = function (english, arabic) {
       return { from: 'them', time: time, text: ar ? arabic : english };
+    };
+    var actionReply = function (english, arabic, actions) {
+      var result = reply(english, arabic);
+      result.actions = actions;
+      return result;
     };
     var card = function (englishTitle, arabicTitle, englishRows, arabicRows) {
       return { from: 'them', time: time, card: {
@@ -10617,6 +10646,16 @@
       );
     }
 
+    /* A request for a human agent must take priority over topic keywords
+       such as transfer or security, so it always gives the real support path. */
+    if (has(/human|agent|real person|representative|call support|talk to support|support team|support|موظف|موظّف|إنسان|شخص حقيقي|ممثل|فريق الدعم|دعم|التحدث مع الدعم|التحدث مع موظف|مكالمة دعم/)) {
+      return actionReply(
+        'To speak with a support agent, open the Help Center, then choose “Contact us”. You will see the official support contact options there. Never share your password, recovery phrase, or one-time code.',
+        'للتحدث مع موظف دعم حقيقي، افتح «مركز المساعدة» ثم اختر «تواصل معنا». ستظهر لك هناك خيارات التواصل الرسمية مع فريق الدعم. لا تشارك كلمة المرور أو العبارة الاستردادية أو رمز التحقق لمرة واحدة مع أي شخص.',
+        [{ key: 'help-center', label: 'Open Help Center', labelAr: 'فتح مركز المساعدة' }]
+      );
+    }
+
     if (has(/transfer|withdraw|pending|sent|deposit|transaction|معلق|معلّق|تحويل|سحب|إيداع|معاملة|معامله|إرسال/) &&
         !has(/fee|cost|charge|رسوم|تكلفة|عمولة/)) {
       return card(
@@ -10672,7 +10711,7 @@
         'أستطيع مساعدتك في إدارة إعدادات الإشعارات. أخبرني إذا كنت تريد إنشاء تنبيه، أو مراجعة التنبيهات، أو كتم الإشعارات لهذا اليوم.'
       );
     }
-    if (has(/human|agent|call|support|موظف|موظّف|إنسان|مكالمة|دعم|شخص حقيقي/)) {
+    if (has(/call|مكالمة/)) {
       if (thread && thread.id === 'security') return reply(
         'I’m ready to help with account security here. Tell me whether the issue is a login, 2FA, a device, or a withdrawal protection setting.',
         'أنا جاهز لمساعدتك في أمان الحساب. اكتب إذا كانت المشكلة في تسجيل الدخول أو المصادقة الثنائية أو جهاز أو إعداد حماية السحب.'
@@ -12856,7 +12895,7 @@
    function openSettingsModal(type){
     var modal=document.getElementById('set-modal'), title=document.getElementById('set-modal-title'), body=document.getElementById('set-modal-body');
     var content='';
-    if(type==='profile'){ title.textContent='Personal details'; content='<form onsubmit="saveSettingsProfile(event)"><div class="set-field"><label>Full name</label><input id="set-edit-name" required minlength="2" value="'+escapeSettings(APP_SETTINGS.name)+'"></div><div class="set-field"><label>Email address</label><input id="set-edit-email" type="email" value="'+escapeSettings(APP_SETTINGS.email)+'"></div><button class="set-save" type="submit">Save changes</button></form>'; }
+    if(type==='profile'){ title.textContent='Personal details'; content='<form onsubmit="saveSettingsProfile(event)"><div class="set-field"><label>Full name</label><input id="set-edit-name" readonly aria-readonly="true" required minlength="2" value="'+escapeSettings(APP_SETTINGS.name)+'"></div><div class="set-field"><label>Email address</label><input id="set-edit-email" type="email" readonly aria-readonly="true" value="'+escapeSettings(APP_SETTINGS.email)+'"></div><button class="set-save" type="submit">Save changes</button></form>'; }
     if(type==='preferences'){ title.textContent='App preferences'; content='<form onsubmit="saveSettingsPreferences(event)"><div class="set-field"><label>Language</label><div class="set-language-picker"><button type="button" class="set-language-trigger" id="set-language-trigger" aria-haspopup="listbox" aria-expanded="false" onclick="toggleLanguageList()"><span class="set-language-current" id="set-language-current"></span><span class="set-language-arrow">⌄</span></button><div class="set-language-list" id="set-language-list" role="listbox"></div><p class="set-language-note">Choose the language you want to use across the entire wallet.</p><select id="set-edit-language" class="set-native-language" aria-hidden="true" tabindex="-1"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option><option value="es">Español</option><option value="de">Deutsch</option><option value="it">Italiano</option><option value="tr">Türkçe</option><option value="pt">Português</option><option value="ru">Русский</option><option value="zh">中文</option><option value="ja">日本語</option></select></div></div><div class="set-field"><label>Display currency</label><select id="set-edit-currency"><option>USD</option><option>EUR</option><option>GBP</option><option>AED</option><option>SAR</option></select></div><button class="set-save" type="submit">Apply preferences</button></form>'; }
     if(type==='password'){ title.textContent='Change password'; content='<form onsubmit="saveSettingsPassword(event)"><div class="set-field"><label>Current password</label><input id="set-current-pass" type="password" minlength="8" required></div><div class="set-field"><label>New password</label><input id="set-new-pass" type="password" minlength="8" required></div><div class="set-field"><label>Confirm new password</label><input id="set-confirm-pass" type="password" minlength="8" required></div><button class="set-save" type="submit">Update password</button></form>'; }
      if(type==='devices'){ title.textContent=uidLocalized('Devices & sessions','الأجهزة والجلسات'); content='<div class="set-device-loading">'+uidLocalized('Reading your real device details…','جارٍ قراءة تفاصيل جهازك الفعلية…')+'</div>'; }
@@ -13662,6 +13701,16 @@
   function refreshUserUI() {
     if (!currentUser) return;
     var name = currentUser.username || currentUser.email || "";
+    var email = currentUser.email || "";
+    if (typeof APP_SETTINGS !== "undefined" && name) {
+      var profileChanged = APP_SETTINGS.name !== name || (email && APP_SETTINGS.email !== email);
+      APP_SETTINGS.name = name;
+      if (email) APP_SETTINGS.email = email;
+      if (profileChanged) {
+        saveSettings();
+        if (typeof applySettings === "function") applySettings();
+      }
+    }
     var nameEl = document.getElementById("dash-name");
     if (nameEl && name) nameEl.textContent = name;
     var avatar = document.getElementById("dash-avatar");
