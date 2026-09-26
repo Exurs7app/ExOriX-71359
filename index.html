@@ -3,16 +3,87 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>ExOriX — Power Up Your Crypto Journey</title>
+<title>CrestX — Power Up Your Crypto Journey</title>
 <meta name="description" content="Track your crypto balance, wallets and top coins like BTC and ETH in a sleek mobile dashboard." />
 <meta name="theme-color" content="#071332" />
+<meta name="application-name" content="CrestX" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="ExOriX" />
-<link rel="manifest" href="./exorix-manifest.webmanifest" />
-<link rel="icon" type="image/png" sizes="192x192" href="./exorix-icon-192.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="./exorix-icon-180.png" />
+<meta name="apple-mobile-web-app-title" content="CrestX" />
+<script>
+  (function () {
+    var brandPattern = /ExOriX/gi;
+    function crest(value) {
+      return typeof value === 'string' ? value.replace(brandPattern, 'CrestX') : value;
+    }
+    function normalizeAttribute(value, attribute) {
+      if (typeof value !== 'string') return value;
+      if (attribute === 'src' || attribute === 'href') {
+        return value
+          .replace('./exorix-manifest.webmanifest', './crestx-manifest.webmanifest')
+          .replace('./exorix-icon-', './crestx-icon-')
+          .replace('./exorix-sw.js', './crestx-sw.js');
+      }
+      if (attribute === 'onclick') {
+        return value
+          .replace(/@exorix_customer_service/g, '@CrestX_customer_service')
+          .replace(/t\.me\/exorix_customer_service/g, 't.me/CrestX_customer_service');
+      }
+      return value;
+    }
+    function updateNode(node) {
+      if (!node) return;
+      if (node.nodeType === 3) {
+        var nextText = crest(node.nodeValue);
+        if (nextText !== node.nodeValue) node.nodeValue = nextText;
+        return;
+      }
+      if (node.nodeType !== 1) return;
+      ['title', 'aria-label', 'alt', 'placeholder', 'src', 'href', 'onclick'].forEach(function (attribute) {
+        if (node.hasAttribute(attribute)) {
+          var nextValue = normalizeAttribute(crest(node.getAttribute(attribute)), attribute);
+          if (nextValue !== node.getAttribute(attribute)) node.setAttribute(attribute, nextValue);
+        }
+      });
+      Array.prototype.slice.call(node.childNodes).forEach(updateNode);
+    }
+    function updateBrand() {
+      updateNode(document.documentElement);
+      var initialTitle = document.title;
+      var nextTitle = crest(initialTitle);
+      if (nextTitle !== initialTitle) document.title = nextTitle;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', updateBrand, { once: true });
+    } else {
+      updateBrand();
+    }
+    if (typeof MutationObserver !== 'undefined') {
+      new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          if (mutation.type === 'characterData') updateNode(mutation.target);
+          else if (mutation.type === 'attributes') updateNode(mutation.target);
+          else Array.prototype.slice.call(mutation.addedNodes).forEach(updateNode);
+        });
+        var currentTitle = document.title;
+        var updatedTitle = crest(currentTitle);
+        if (updatedTitle !== currentTitle) document.title = updatedTitle;
+      }).observe(document.documentElement, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ['title', 'aria-label', 'alt', 'placeholder', 'src', 'href', 'onclick']
+      });
+    }
+  })();
+</script>
+<link rel="manifest" href="./crestx-manifest.webmanifest" />
+<link rel="icon" type="image/png" sizes="512x512" href="./crestx-icon-512.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="./crestx-icon-192.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="./crestx-icon-180.png" />
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="./crestx-icon-180.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -3726,7 +3797,7 @@
     padding-top: 29px; overflow-y: auto;
   }
   #page-login .auth-form::before, #page-signup .auth-form::before, #page-forgot .auth-form::before {
-    content: "◈  ExOriX"; display: block; margin: 0 auto 29px; color: #f5f8ff;
+    content: "◈  CrestX"; display: block; margin: 0 auto 29px; color: #f5f8ff;
     font-size: 22px; font-weight: 700; text-align: center; letter-spacing: .2px;
     text-shadow: 0 2px 14px rgba(99,185,255,.34);
   }
@@ -11632,7 +11703,7 @@
          if (el.getAttribute(attr)!==translatedAttr) el.setAttribute(attr,translatedAttr);
       });
     });
-    document.title=translateSource('ExOriX — Power Up Your Crypto Journey',lang);
+    document.title=translateSource('CrestX — Power Up Your Crypto Journey',lang);
     i18nBusy=false;
   }
    function scheduleI18nTranslation(delay) {
@@ -13200,7 +13271,7 @@
       '<div class="set-devices-actions"><button class="set-link-btn" onclick="openSettingsModal(\'devices\')">'+uidLocalized('Update device details','تحديث تفاصيل الجهاز')+'</button></div>';
    }
    function copyTelegramContact(){
-     var handle='@exorix_customer_service';
+     var handle='@CrestX_customer_service';
      var button=document.getElementById('set-telegram-copy');
      var label=button?button.querySelector('.set-contact-copy-label'):null;
      function done(){
@@ -13893,7 +13964,7 @@
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') closeDashboardPopovers();
   });
-   if('serviceWorker' in navigator && /^https?:$/.test(window.location.protocol)){window.addEventListener('load',function(){navigator.serviceWorker.register('./exorix-sw.js',{scope:'./',updateViaCache:'none'}).then(function(){if(navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(function(){updateAppInstallUI();});}).catch(function(){updateAppInstallUI();});});}
+   if('serviceWorker' in navigator && /^https?:$/.test(window.location.protocol)){window.addEventListener('load',function(){navigator.serviceWorker.register('./crestx-sw.js',{scope:'./',updateViaCache:'none'}).then(function(){if(navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(function(){updateAppInstallUI();});}).catch(function(){updateAppInstallUI();});});}
   initMarketTabs();
   syncDashboardBalanceSnapshot();
   applySettings();

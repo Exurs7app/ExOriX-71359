@@ -1,0 +1,42 @@
+{
+  "name": "CrestX",
+  "short_name": "CrestX",
+  "id": "./",
+  "description": "CrestX trading and wallet platform.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#071332",
+  "background_color": "#071332",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["finance", "business"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "./crestx-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./crestx-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./crestx-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./crestx-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
