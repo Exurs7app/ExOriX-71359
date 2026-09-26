@@ -9149,15 +9149,12 @@
   function shareWalletAddress() {
     var net = WALLET_NETWORKS[WALLET_NET];
     if (!net || !net.address) return;
-    var shareUrl = /^https?:$/.test(window.location.protocol) ? window.location.href : '';
     var payload = {
-      title: 'FluxChain deposit address',
-      text: 'USDT · ' + net.label + '\n' + net.address
+       text: net.address
     };
-    if (shareUrl) payload.url = shareUrl;
 
     function fallbackShare() {
-      var shareText = payload.text + (shareUrl ? '\n' + shareUrl : '');
+       var shareText = payload.text;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(shareText)
           .then(function () { walletToast('Deposit details copied for sharing'); })
